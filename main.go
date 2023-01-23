@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
+	grpchealth "github.com/bufbuild/connect-grpchealth-go"
 	"github.com/grpc-buf/internal/gen/payment/paymentconnect"
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
@@ -27,6 +28,10 @@ func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func NewPaymentServer() paymentconnect.PaymentHandler {
+	return &PaymentServer{}
 }
 
 func newCORS() *cors.Cors {
@@ -70,18 +75,29 @@ func newCORS() *cors.Cors {
 
 func run() error {
 	mux := http.NewServeMux()
-	reflector := grpcreflect.NewStaticReflector(
-		"payment.v1.MakePayment",
-		// protoc-gen-connect-go generates package-level constants
-		// for these fully-qualified protobuf service names, so you'd more likely
-		// reference userv1.UserServiceName and groupv1.GroupServiceName.
-	)
 	// The generated constructors return a path and a plain net/http
 	// handler.
 	log.Println("starting new server")
-	mux.Handle(paymentconnect.NewPaymentHandler(&PaymentServer{}))
-	mux.Handle(grpcreflect.NewHandlerV1(reflector))
-	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
+	compress1KB := connect.WithCompressMinBytes(1024)
+	mux.Handle(paymentconnect.NewPaymentHandler(
+		NewPaymentServer(),
+		compress1KB,
+	))
+	mux.Handle(grpchealth.NewHandler(
+		grpchealth.NewStaticChecker(paymentconnect.PaymentName),
+		compress1KB,
+	))
+	mux.Handle(grpcreflect.NewHandlerV1(
+		grpcreflect.NewStaticReflector(paymentconnect.PaymentName),
+		compress1KB,
+	))
+	mux.Handle(grpcreflect.NewHandlerV1Alpha(
+		grpcreflect.NewStaticReflector(paymentconnect.PaymentName),
+		compress1KB,
+	))
+
+	// mux.Handle(grpcreflect.NewHandlerV1(reflector))
+	// mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
