@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -12,27 +12,13 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	grpchealth "github.com/bufbuild/connect-grpchealth-go"
+	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
+	"github.com/grpc-buf/internal/gen/payment"
 	"github.com/grpc-buf/internal/gen/payment/paymentconnect"
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-
-	// This import path is based on the name declaration in the go.mod,
-	// and the gen/proto/go output location in the buf.gen.yaml.
-
-	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
-	"github.com/grpc-buf/internal/gen/payment"
 )
-
-func main() {
-	if err := run(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func NewPaymentServer() paymentconnect.PaymentHandler {
-	return &PaymentServer{}
-}
 
 func newCORS() *cors.Cors {
 	// To let web developers play with the demo service from browsers, we need a
@@ -73,10 +59,9 @@ func newCORS() *cors.Cors {
 	})
 }
 
-func run() error {
+func Run() error {
 	mux := http.NewServeMux()
-	// The generated constructors return a path and a plain net/http
-	// handler.
+
 	log.Println("starting new server")
 	compress1KB := connect.WithCompressMinBytes(1024)
 	mux.Handle(paymentconnect.NewPaymentHandler(
@@ -95,9 +80,6 @@ func run() error {
 		grpcreflect.NewStaticReflector(paymentconnect.PaymentName),
 		compress1KB,
 	))
-
-	// mux.Handle(grpcreflect.NewHandlerV1(reflector))
-	// mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
@@ -129,6 +111,10 @@ func run() error {
 		log.Fatalf("HTTP shutdown: %v", err) //nolint:gocritic
 	}
 	return nil
+}
+
+func NewPaymentServer() paymentconnect.PaymentHandler {
+	return &PaymentServer{}
 }
 
 // PaymentServer implements the PetStoreService API.
