@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
-	"github.com/grpc-buf/internal/gen/payment/paymentconnect"
+	paymentconnect "github.com/grpc-buf/internal/gen/payment/paymentv1connect"
 	"golang.org/x/net/http2"
 
 	// This import path is based on the name declaration in the go.mod,
 	// and the gen/proto/go output location in the buf.gen.yaml.
-	"github.com/grpc-buf/internal/gen/payment"
+	payment "github.com/grpc-buf/internal/gen/payment"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

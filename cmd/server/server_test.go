@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
-	"github.com/grpc-buf/internal/gen/payment"
-	"github.com/grpc-buf/internal/gen/payment/paymentconnect"
+	payment "github.com/grpc-buf/internal/gen/payment"
+	paymentconnect "github.com/grpc-buf/internal/gen/payment/paymentv1connect"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"

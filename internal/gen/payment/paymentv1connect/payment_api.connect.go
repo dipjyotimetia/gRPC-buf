@@ -2,7 +2,7 @@
 //
 // Source: payment/payment_api.proto
 
-package paymentconnect
+package paymentv1connect
 
 import (
 	context "context"
@@ -22,10 +22,10 @@ const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
 	// PaymentName is the fully-qualified name of the Payment service.
-	PaymentName = "payment.Payment"
+	PaymentName = "rpc.payment.v1.Payment"
 )
 
-// PaymentClient is a client for the payment.Payment service.
+// PaymentClient is a client for the rpc.payment.v1.Payment service.
 type PaymentClient interface {
 	// MakePayment
 	MakePayment(context.Context, *connect_go.Request[payment.PaymentRequest]) (*connect_go.Response[payment.PaymentResponse], error)
@@ -35,8 +35,8 @@ type PaymentClient interface {
 	PayInvoice(context.Context, *connect_go.Request[payment.Invoice]) (*connect_go.Response[payment.Invoice], error)
 }
 
-// NewPaymentClient constructs a client for the payment.Payment service. By default, it uses the
-// Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// NewPaymentClient constructs a client for the rpc.payment.v1.Payment service. By default, it uses
+// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
 // uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
 // connect.WithGRPCWeb() options.
 //
@@ -47,17 +47,17 @@ func NewPaymentClient(httpClient connect_go.HTTPClient, baseURL string, opts ...
 	return &paymentClient{
 		makePayment: connect_go.NewClient[payment.PaymentRequest, payment.PaymentResponse](
 			httpClient,
-			baseURL+"/payment.Payment/MakePayment",
+			baseURL+"/rpc.payment.v1.Payment/MakePayment",
 			opts...,
 		),
 		markInvoicePaid: connect_go.NewClient[payment.Invoice, payment.Invoice](
 			httpClient,
-			baseURL+"/payment.Payment/MarkInvoicePaid",
+			baseURL+"/rpc.payment.v1.Payment/MarkInvoicePaid",
 			opts...,
 		),
 		payInvoice: connect_go.NewClient[payment.Invoice, payment.Invoice](
 			httpClient,
-			baseURL+"/payment.Payment/PayInvoice",
+			baseURL+"/rpc.payment.v1.Payment/PayInvoice",
 			opts...,
 		),
 	}
@@ -70,22 +70,22 @@ type paymentClient struct {
 	payInvoice      *connect_go.Client[payment.Invoice, payment.Invoice]
 }
 
-// MakePayment calls payment.Payment.MakePayment.
+// MakePayment calls rpc.payment.v1.Payment.MakePayment.
 func (c *paymentClient) MakePayment(ctx context.Context, req *connect_go.Request[payment.PaymentRequest]) (*connect_go.Response[payment.PaymentResponse], error) {
 	return c.makePayment.CallUnary(ctx, req)
 }
 
-// MarkInvoicePaid calls payment.Payment.MarkInvoicePaid.
+// MarkInvoicePaid calls rpc.payment.v1.Payment.MarkInvoicePaid.
 func (c *paymentClient) MarkInvoicePaid(ctx context.Context, req *connect_go.Request[payment.Invoice]) (*connect_go.Response[payment.Invoice], error) {
 	return c.markInvoicePaid.CallUnary(ctx, req)
 }
 
-// PayInvoice calls payment.Payment.PayInvoice.
+// PayInvoice calls rpc.payment.v1.Payment.PayInvoice.
 func (c *paymentClient) PayInvoice(ctx context.Context, req *connect_go.Request[payment.Invoice]) (*connect_go.Response[payment.Invoice], error) {
 	return c.payInvoice.CallUnary(ctx, req)
 }
 
-// PaymentHandler is an implementation of the payment.Payment service.
+// PaymentHandler is an implementation of the rpc.payment.v1.Payment service.
 type PaymentHandler interface {
 	// MakePayment
 	MakePayment(context.Context, *connect_go.Request[payment.PaymentRequest]) (*connect_go.Response[payment.PaymentResponse], error)
@@ -102,35 +102,35 @@ type PaymentHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewPaymentHandler(svc PaymentHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle("/payment.Payment/MakePayment", connect_go.NewUnaryHandler(
-		"/payment.Payment/MakePayment",
+	mux.Handle("/rpc.payment.v1.Payment/MakePayment", connect_go.NewUnaryHandler(
+		"/rpc.payment.v1.Payment/MakePayment",
 		svc.MakePayment,
 		opts...,
 	))
-	mux.Handle("/payment.Payment/MarkInvoicePaid", connect_go.NewUnaryHandler(
-		"/payment.Payment/MarkInvoicePaid",
+	mux.Handle("/rpc.payment.v1.Payment/MarkInvoicePaid", connect_go.NewUnaryHandler(
+		"/rpc.payment.v1.Payment/MarkInvoicePaid",
 		svc.MarkInvoicePaid,
 		opts...,
 	))
-	mux.Handle("/payment.Payment/PayInvoice", connect_go.NewUnaryHandler(
-		"/payment.Payment/PayInvoice",
+	mux.Handle("/rpc.payment.v1.Payment/PayInvoice", connect_go.NewUnaryHandler(
+		"/rpc.payment.v1.Payment/PayInvoice",
 		svc.PayInvoice,
 		opts...,
 	))
-	return "/payment.Payment/", mux
+	return "/rpc.payment.v1.Payment/", mux
 }
 
 // UnimplementedPaymentHandler returns CodeUnimplemented from all methods.
 type UnimplementedPaymentHandler struct{}
 
 func (UnimplementedPaymentHandler) MakePayment(context.Context, *connect_go.Request[payment.PaymentRequest]) (*connect_go.Response[payment.PaymentResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("payment.Payment.MakePayment is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("rpc.payment.v1.Payment.MakePayment is not implemented"))
 }
 
 func (UnimplementedPaymentHandler) MarkInvoicePaid(context.Context, *connect_go.Request[payment.Invoice]) (*connect_go.Response[payment.Invoice], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("payment.Payment.MarkInvoicePaid is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("rpc.payment.v1.Payment.MarkInvoicePaid is not implemented"))
 }
 
 func (UnimplementedPaymentHandler) PayInvoice(context.Context, *connect_go.Request[payment.Invoice]) (*connect_go.Response[payment.Invoice], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("payment.Payment.PayInvoice is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("rpc.payment.v1.Payment.PayInvoice is not implemented"))
 }

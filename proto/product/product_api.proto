@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package productsService;
+package rpc.productsService.v1;
 
 option go_package = ".;productsService";
 option csharp_namespace = "ProductsService";
