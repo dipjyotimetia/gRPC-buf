@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api
+    depends_on:
+      - mongo
+    ports:
+      - "8080:8080"
+#    networks:
+#      - overlay
+    environment:
+      - ENVIRONMENT=dev
+    restart: on-failure
+
+  mongo:
+    container_name: mongo
+    image: mongo:6.0.3
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+#    networks:
+#      - overlay
+
+#networks:
+#  overlay:
+#    driver: bridge

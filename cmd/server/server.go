@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,20 +12,29 @@ import (
 	"github.com/bufbuild/connect-go"
 	grpchealth "github.com/bufbuild/connect-grpchealth-go"
 	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
-	payment "github.com/grpc-buf/internal/gen/payment"
 	paymentconnect "github.com/grpc-buf/internal/gen/payment/paymentv1connect"
+	"github.com/grpc-buf/internal/mongo"
+	"github.com/grpc-buf/internal/service"
 	"github.com/rs/cors"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+)
+
+var (
+	db             = mongo.NewDatabaseConnection()
+	paymentService = service.NewPaymentService(db)
 )
 
 func Run() error {
 	mux := http.NewServeMux()
 
-	log.Println("starting new server")
+	log.SetFormatter(&log.JSONFormatter{})
+	log.Info("Starting grpc server")
+
 	compress1KB := connect.WithCompressMinBytes(1024)
 	mux.Handle(paymentconnect.NewPaymentHandler(
-		NewPaymentServer(),
+		paymentService,
 		compress1KB,
 	))
 	mux.Handle(grpchealth.NewHandler(
@@ -74,28 +82,14 @@ func Run() error {
 	return nil
 }
 
-func NewPaymentServer() paymentconnect.PaymentHandler {
-	return &PaymentServer{}
-}
-
-// PaymentServer implements the PetStoreService API.
-type PaymentServer struct {
-	paymentconnect.UnimplementedPaymentHandler
-}
-
-// MakePayment adds the pet associated with the given request into the PetStore.
-func (s *PaymentServer) MakePayment(ctx context.Context, req *connect.Request[payment.PaymentRequest]) (*connect.Response[payment.PaymentResponse], error) {
-	name := req.Msg.GetName()
-	amount := req.Msg.GetAmount()
-	log.Println("Got a payment with a name ", name, "amount", amount)
-	log.Println(req.Header().Get("Some-Header"))
-	res := connect.NewResponse(&payment.PaymentResponse{
-		Response: &payment.PaymentResponse_Paid{Paid: true},
-	})
-	res.Header().Set("Some-Other-Header", "hello!")
-
-	return res, nil
-}
+// func NewPaymentServer() paymentconnect.PaymentHandler {
+// 	return &PaymentServer{}
+// }
+//
+// // PaymentServer implements the PetStoreService API.
+// type PaymentServer struct {
+// 	paymentconnect.UnimplementedPaymentHandler
+// }
 
 func newCORS() *cors.Cors {
 	// To let web developers play with the demo service from browsers, we need a

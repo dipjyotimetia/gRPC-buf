@@ -10,6 +10,8 @@ import (
 	"github.com/bufbuild/connect-go"
 	payment "github.com/grpc-buf/internal/gen/payment"
 	paymentconnect "github.com/grpc-buf/internal/gen/payment/paymentv1connect"
+	"github.com/grpc-buf/internal/mongo"
+	"github.com/grpc-buf/internal/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -17,8 +19,12 @@ import (
 
 func TestElizaServer(t *testing.T) {
 	t.Parallel()
+	var (
+		db             = mongo.NewDatabaseConnection()
+		paymentService = service.NewPaymentService(db)
+	)
 	mux := http.NewServeMux()
-	mux.Handle(paymentconnect.NewPaymentHandler(NewPaymentServer()))
+	mux.Handle(paymentconnect.NewPaymentHandler(paymentService))
 	server := httptest.NewUnstartedServer(mux)
 	server.EnableHTTP2 = true
 	server.StartTLS()
