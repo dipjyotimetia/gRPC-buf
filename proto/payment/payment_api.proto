@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package payment;
+
+option go_package = "payment/paymentpb";
+option csharp_namespace = "Payment";
+option java_multiple_files = true;
+option java_outer_classname = "PaymentProto";
+option java_package = "com.payment";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/type/money.proto";
+
+service Payment {
+  // MakePayment
+  rpc MakePayment(PaymentRequest) returns (PaymentResponse){
+    option (google.api.http) = {
+      post: "/v1/payment/make"
+      body: "*"
+    };
+  };
+  // MakePaymentInvoice
+  rpc MarkInvoicePaid(Invoice) returns (Invoice){
+    option (google.api.http) = {
+      post: "/v1/invoice/mark"
+      body: "*"
+    };
+  };
+  // PayInvoice
+  rpc PayInvoice(Invoice) returns (Invoice){
+    option (google.api.http) = {
+      post: "/v1/invoice/pay"
+      body: "*"
+    };
+  };
+}
+
+/**
+ * Payment invoice information
+*/
+message Invoice {
+  // Invoice id
+  int64 id = 1;
+  // Invoice name
+  string name = 2;
+  // Amount
+  google.type.Money amount = 3;
+  // Paid
+  bool paid = 4;
+}
+
+/**
+ * Payment information request
+*/
+message PaymentRequest {
+  // Card No
+  int64 CardNo = 1;
+  // Card types
+  CardType card = 2;
+  // Card holder name
+  string name = 3;
+  // Card holder address
+  repeated string address = 4;
+  // Total amount
+  float amount = 5;
+  // Payment created time
+  google.protobuf.Timestamp payment_created = 6;
+}
+
+/**
+ * Payment information response
+*/
+message PaymentResponse {
+  oneof response{
+    // payment id
+    bool paid = 1;
+    // payment error
+    string error = 2;
+  }
+}
+
+/**
+ * Payment card types
+*/
+enum CardType {
+  DebitCard = 0;  // Debit Card
+  CreditCard = 1; // Credit Card
+  MasterCard = 2; // Master Card
+  RewardCard = 3; // Reward Card
+}
+
+message Empty {}
