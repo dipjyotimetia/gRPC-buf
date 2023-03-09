@@ -1,0 +1,64 @@
+name: Docker
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    env:
+      IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_APP_NAME }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v1'
+        name: 'Authenticate to Google Cloud'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+          token_format: 'access_token'
+          access_token_lifetime: '300s'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - uses: 'docker/login-action@v2'
+        name: Login to GCR
+        with:
+          registry: 'gcr.io'
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build . --tag $IMAGE_NAME
+
+      #      - name: Test Docker image
+      #        run: docker run $IMAGE_NAME sh -c "go test -v"
+
+      - name: Push Docker image
+        run: docker push $IMAGE_NAME
+
+      - id: 'auth-cr'
+        uses: 'google-github-actions/auth@v1'
+        name: 'Authenticate to Google Cloud'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v1
+        with:
+          service:  ${{ secrets.GCP_APP_NAME }}
+          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_APP_NAME }}:latest
+          region: australia-southeast1
+          secrets: MONGO_URL=projects/1042576031837/secrets/mongodb/versions/2
+          flags: --use-http2
