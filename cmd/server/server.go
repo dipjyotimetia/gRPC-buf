@@ -12,11 +12,17 @@ import (
 	"github.com/bufbuild/connect-go"
 	grpchealth "github.com/bufbuild/connect-grpchealth-go"
 	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
+	otelconnect "github.com/bufbuild/connect-opentelemetry-go"
 	paymentconnect "github.com/grpc-buf/internal/gen/payment/paymentv1connect"
 	"github.com/grpc-buf/internal/mongo"
 	"github.com/grpc-buf/internal/service"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/trace"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -27,6 +33,8 @@ var (
 )
 
 func Run() error {
+	// Set up OpenTelemetry globals
+	setupOtel()
 	mux := http.NewServeMux()
 
 	log.SetFormatter(&log.JSONFormatter{})
@@ -36,6 +44,7 @@ func Run() error {
 	mux.Handle(paymentconnect.NewPaymentHandler(
 		paymentService,
 		compress1KB,
+		connect.WithInterceptors(otelconnect.NewInterceptor()),
 	))
 	mux.Handle(grpchealth.NewHandler(
 		grpchealth.NewStaticChecker(paymentconnect.PaymentName),
@@ -90,6 +99,13 @@ func Run() error {
 // type PaymentServer struct {
 // 	paymentconnect.UnimplementedPaymentHandler
 // }
+
+func setupOtel() {
+	// Exporting to different platforms can be configured here
+	otel.SetTracerProvider(trace.NewTracerProvider())
+	global.SetMeterProvider(metric.NewMeterProvider())
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+}
 
 func newCORS() *cors.Cors {
 	// To let web developers play with the demo service from browsers, we need a

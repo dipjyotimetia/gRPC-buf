@@ -31,7 +31,7 @@ func main() {
 				},
 			},
 		},
-		"http://localhost:8080",
+		"grcpbuff-i6avjiaelq-ts.a.run.app:443",
 		connect.WithGRPC(),
 	)
 	req := connect.NewRequest(&payment.PaymentRequest{
