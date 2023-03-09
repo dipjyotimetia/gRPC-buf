@@ -1,4 +1,4 @@
-name: Docker
+name: Deploy
 
 on:
   push:
@@ -34,6 +34,7 @@ jobs:
           registry: 'gcr.io'
           username: 'oauth2accesstoken'
           password: '${{ steps.auth.outputs.access_token }}'
+          logout: true
 
       - name: Checkout repository
         uses: actions/checkout@v3
