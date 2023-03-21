@@ -91,15 +91,6 @@ func Run() error {
 	return nil
 }
 
-// func NewPaymentServer() paymentconnect.PaymentHandler {
-// 	return &PaymentServer{}
-// }
-//
-// // PaymentServer implements the PetStoreService API.
-// type PaymentServer struct {
-// 	paymentconnect.UnimplementedPaymentHandler
-// }
-
 func setupOtel() {
 	// Exporting to different platforms can be configured here
 	otel.SetTracerProvider(trace.NewTracerProvider())

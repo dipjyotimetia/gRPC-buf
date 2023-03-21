@@ -60,3 +60,5 @@ protoc-gen-go:
 
 protoc-gen-go-grpc: 
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+protoc --proto_path=proto/expense --go_out=internal/gen/ --go-grpc_out=internal/gen/ --go-grpc_opt=require_unimplemented_servers=false expense.proto
