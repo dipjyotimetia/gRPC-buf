@@ -3,7 +3,7 @@ module github.com/grpc-buf
 go 1.20
 
 require (
-	github.com/bufbuild/connect-go v1.5.2
+	github.com/bufbuild/connect-go v1.6.0
 	github.com/bufbuild/connect-grpchealth-go v1.0.0
 	github.com/bufbuild/connect-grpcreflect-go v1.0.0
 	github.com/bufbuild/connect-opentelemetry-go v0.1.0
