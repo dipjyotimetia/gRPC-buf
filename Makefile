@@ -49,16 +49,20 @@ lintfix: golangci-lint buf ## Automatically fix some lint errors
 upgrade: ## Upgrade dependencies
 	go get -u -t ./... && go mod tidy -v
 
+.PHONY: buf golangci-lint protoc-gen-go protoc-gen-go-grpc
+
 buf:
 	go install github.com/bufbuild/buf/cmd/buf@latest
 
 golangci-lint:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-protoc-gen-go: 
+protoc-gen-go:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 
-protoc-gen-go-grpc: 
+protoc-gen-go-grpc:
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-protoc --proto_path=proto/expense --go_out=internal/gen/ --go-grpc_out=internal/gen/ --go-grpc_opt=require_unimplemented_servers=false expense.proto
+.PHONY: generate
+generate: protoc-gen-go protoc-gen-go-grpc ## Generate Go code from protobuf
+	protoc --proto_path=proto/expense --go_out=internal/gen/ --go-grpc_out=internal/gen/ --go-grpc_opt=require_unimplemented_servers=false expense.proto

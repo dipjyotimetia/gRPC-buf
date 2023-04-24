@@ -12,23 +12,21 @@ import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "google/type/money.proto";
 
+// Payment service provides methods for making payments and managing invoices
 service Payment {
-  // MakePayment
-  rpc MakePayment(PaymentRequest) returns (PaymentResponse){
+  rpc MakePayment(PaymentRequest) returns (PaymentResponse) {
     option (google.api.http) = {
       post: "/v1/payment/make"
       body: "*"
     };
   };
-  // MakePaymentInvoice
-  rpc MarkInvoicePaid(Invoice) returns (Invoice){
+  rpc MarkInvoicePaid(Invoice) returns (Invoice) {
     option (google.api.http) = {
       post: "/v1/invoice/mark"
       body: "*"
     };
   };
-  // PayInvoice
-  rpc PayInvoice(Invoice) returns (Invoice){
+  rpc PayInvoice(Invoice) returns (Invoice) {
     option (google.api.http) = {
       post: "/v1/invoice/pay"
       body: "*"
@@ -36,58 +34,38 @@ service Payment {
   };
 }
 
-/**
- * Payment invoice information
-*/
+// Invoice information
 message Invoice {
-  // Invoice id
-  int64 id = 1;
-  // Invoice name
-  string name = 2;
-  // Amount
-  google.type.Money amount = 3;
-  // Paid
-  bool paid = 4;
+  int64 id = 1;                       // Unique identifier for the invoice
+  string name = 2;                    // Invoice name
+  google.type.Money amount = 3;       // Invoice amount
+  bool paid = 4;                      // Indicates if the invoice is paid
 }
 
-/**
- * Payment information request
-*/
+// PaymentRequest contains payment information for processing a payment
 message PaymentRequest {
-  // Card No
-  int64 CardNo = 1;
-  // Card types
-  CardType card = 2;
-  // Card holder name
-  string name = 3;
-  // Card holder address
-  repeated string address = 4;
-  // Total amount
-  float amount = 5;
-  // Payment created time
-  google.protobuf.Timestamp payment_created = 6;
+  int64 CardNo = 1;                   // Card number
+  CardType card = 2;                  // Card type
+  string name = 3;                    // Card holder's name
+  repeated string address = 4;        // Card holder's address
+  float amount = 5;                   // Total payment amount
+  google.protobuf.Timestamp payment_created = 6; // Timestamp for when the payment was created
 }
 
-/**
- * Payment information response
-*/
+// PaymentResponse returns the result of a payment request
 message PaymentResponse {
-  oneof response{
-    // payment id
-    bool paid = 1;
-    // payment error
-    string error = 2;
+  oneof response {
+    bool paid = 1;                    // Indicates if the payment was successful
+    string error = 2;                 // Payment error message (if any)
   }
 }
 
-/**
- * Payment card types
-*/
+// CardType enum represents different types of payment cards
 enum CardType {
-  DebitCard = 0;  // Debit Card
-  CreditCard = 1; // Credit Card
-  MasterCard = 2; // Master Card
-  RewardCard = 3; // Reward Card
+  DebitCard = 0;   // Debit Card
+  CreditCard = 1;  // Credit Card
+  MasterCard = 2;  // Master Card
+  RewardCard = 3;  // Reward Card
 }
 
 message Empty {}
