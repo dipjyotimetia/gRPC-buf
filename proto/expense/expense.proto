@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package expense;
+
+option go_package = "expense/expensepb";
+
+import "google/protobuf/timestamp.proto";
+
+// Expense information
+message Expense {
+  // Unique identifier for the expense
+  int64 expense_id = 1;
+  // Type of the expense
+  ExpenseType expense_type = 2;
+  // Amount spent on the expense
+  double amount = 3;
+  // Additional information, such as address or description
+  string address = 4;
+  // Timestamp for when the expense was created
+  google.protobuf.Timestamp created_at = 5;
+}
+
+// Enumeration of possible expense types
+enum ExpenseType {
+  Shopping = 0;
+  Grocery = 1;
+  Food = 2;
+}
