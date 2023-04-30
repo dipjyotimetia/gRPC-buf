@@ -25,13 +25,26 @@ const (
 	PaymentName = "rpc.payment.v1.Payment"
 )
 
+// These constants are the fully-qualified names of the RPCs defined in this package. They're
+// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+//
+// Note that these are different from the fully-qualified method names used by
+// google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
+// reflection-formatted method names, remove the leading slash and convert the remaining slash to a
+// period.
+const (
+	// PaymentMakePaymentProcedure is the fully-qualified name of the Payment's MakePayment RPC.
+	PaymentMakePaymentProcedure = "/rpc.payment.v1.Payment/MakePayment"
+	// PaymentMarkInvoicePaidProcedure is the fully-qualified name of the Payment's MarkInvoicePaid RPC.
+	PaymentMarkInvoicePaidProcedure = "/rpc.payment.v1.Payment/MarkInvoicePaid"
+	// PaymentPayInvoiceProcedure is the fully-qualified name of the Payment's PayInvoice RPC.
+	PaymentPayInvoiceProcedure = "/rpc.payment.v1.Payment/PayInvoice"
+)
+
 // PaymentClient is a client for the rpc.payment.v1.Payment service.
 type PaymentClient interface {
-	// MakePayment
 	MakePayment(context.Context, *connect_go.Request[payment.PaymentRequest]) (*connect_go.Response[payment.PaymentResponse], error)
-	// MakePaymentInvoice
 	MarkInvoicePaid(context.Context, *connect_go.Request[payment.Invoice]) (*connect_go.Response[payment.Invoice], error)
-	// PayInvoice
 	PayInvoice(context.Context, *connect_go.Request[payment.Invoice]) (*connect_go.Response[payment.Invoice], error)
 }
 
@@ -47,17 +60,17 @@ func NewPaymentClient(httpClient connect_go.HTTPClient, baseURL string, opts ...
 	return &paymentClient{
 		makePayment: connect_go.NewClient[payment.PaymentRequest, payment.PaymentResponse](
 			httpClient,
-			baseURL+"/rpc.payment.v1.Payment/MakePayment",
+			baseURL+PaymentMakePaymentProcedure,
 			opts...,
 		),
 		markInvoicePaid: connect_go.NewClient[payment.Invoice, payment.Invoice](
 			httpClient,
-			baseURL+"/rpc.payment.v1.Payment/MarkInvoicePaid",
+			baseURL+PaymentMarkInvoicePaidProcedure,
 			opts...,
 		),
 		payInvoice: connect_go.NewClient[payment.Invoice, payment.Invoice](
 			httpClient,
-			baseURL+"/rpc.payment.v1.Payment/PayInvoice",
+			baseURL+PaymentPayInvoiceProcedure,
 			opts...,
 		),
 	}
@@ -87,11 +100,8 @@ func (c *paymentClient) PayInvoice(ctx context.Context, req *connect_go.Request[
 
 // PaymentHandler is an implementation of the rpc.payment.v1.Payment service.
 type PaymentHandler interface {
-	// MakePayment
 	MakePayment(context.Context, *connect_go.Request[payment.PaymentRequest]) (*connect_go.Response[payment.PaymentResponse], error)
-	// MakePaymentInvoice
 	MarkInvoicePaid(context.Context, *connect_go.Request[payment.Invoice]) (*connect_go.Response[payment.Invoice], error)
-	// PayInvoice
 	PayInvoice(context.Context, *connect_go.Request[payment.Invoice]) (*connect_go.Response[payment.Invoice], error)
 }
 
@@ -102,18 +112,18 @@ type PaymentHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewPaymentHandler(svc PaymentHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle("/rpc.payment.v1.Payment/MakePayment", connect_go.NewUnaryHandler(
-		"/rpc.payment.v1.Payment/MakePayment",
+	mux.Handle(PaymentMakePaymentProcedure, connect_go.NewUnaryHandler(
+		PaymentMakePaymentProcedure,
 		svc.MakePayment,
 		opts...,
 	))
-	mux.Handle("/rpc.payment.v1.Payment/MarkInvoicePaid", connect_go.NewUnaryHandler(
-		"/rpc.payment.v1.Payment/MarkInvoicePaid",
+	mux.Handle(PaymentMarkInvoicePaidProcedure, connect_go.NewUnaryHandler(
+		PaymentMarkInvoicePaidProcedure,
 		svc.MarkInvoicePaid,
 		opts...,
 	))
-	mux.Handle("/rpc.payment.v1.Payment/PayInvoice", connect_go.NewUnaryHandler(
-		"/rpc.payment.v1.Payment/PayInvoice",
+	mux.Handle(PaymentPayInvoiceProcedure, connect_go.NewUnaryHandler(
+		PaymentPayInvoiceProcedure,
 		svc.PayInvoice,
 		opts...,
 	))

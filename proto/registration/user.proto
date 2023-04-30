@@ -1,12 +1,13 @@
 syntax = "proto3";
 
-package user;
+package rpc.user.v1;
 
-option go_package = "expense/userpb";
+option go_package = "users/userpb";
 
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
 
-message User {
+message RegisterRequest {
   string id = 1;
   string email = 2;
   string password = 3;
@@ -14,10 +15,6 @@ message User {
   string last_name = 5;
   google.protobuf.Timestamp created_at = 6;
   google.protobuf.Timestamp updated_at = 7;
-}
-
-message RegisterRequest {
-  User user = 1;
 }
 
 message RegisterResponse {
@@ -31,14 +28,20 @@ message LoginRequest {
 }
 
 message LoginResponse {
-  string id = 1;
-  string email = 2;
-  string first_name = 3;
-  string last_name = 4;
   string access_token = 5;
 }
 
 service UserService {
-  rpc RegisterUser(RegisterRequest) returns (RegisterResponse);
-  rpc LoginUser(LoginRequest) returns (LoginResponse);
+  rpc RegisterUser(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/user/register"
+      body: "*"
+    };
+  }
+  rpc LoginUser(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/user/login"
+      body: "*"
+    };
+  }
 }

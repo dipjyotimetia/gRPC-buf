@@ -7,6 +7,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	payment "github.com/grpc-buf/internal/gen/payment"
+	"github.com/grpc-buf/internal/gen/registration"
 	log "github.com/sirupsen/logrus"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,6 +25,8 @@ const (
 
 type DataStore interface {
 	MakePayment(ctx context.Context, req *connect.Request[payment.PaymentRequest]) (*connect.Response[payment.PaymentResponse], error)
+	LoginUser(ctx context.Context, req *connect.Request[userv1.LoginRequest]) (*connect.Response[userv1.LoginResponse], error)
+	RegisterUser(ctx context.Context, req *connect.Request[userv1.RegisterRequest]) (*connect.Response[userv1.RegisterResponse], error)
 }
 
 // Store database session

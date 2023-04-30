@@ -9,11 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bufbuild/connect-go"
-	grpchealth "github.com/bufbuild/connect-grpchealth-go"
-	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
-	otelconnect "github.com/bufbuild/connect-opentelemetry-go"
-	paymentconnect "github.com/grpc-buf/internal/gen/payment/paymentv1connect"
 	"github.com/grpc-buf/internal/mongo"
 	"github.com/grpc-buf/internal/service"
 	"github.com/rs/cors"
@@ -30,34 +25,16 @@ import (
 var (
 	db             = mongo.NewDatabaseConnection()
 	paymentService = service.NewPaymentService(db)
+	userService    = service.NewUserService(db)
 )
 
 func Run() error {
 	// Set up OpenTelemetry globals
 	setupOtel()
-	mux := http.NewServeMux()
+	mux := setupHandler()
 
 	log.SetFormatter(&log.JSONFormatter{})
 	log.Info("Starting grpc server")
-
-	compress1KB := connect.WithCompressMinBytes(1024)
-	mux.Handle(paymentconnect.NewPaymentHandler(
-		paymentService,
-		compress1KB,
-		connect.WithInterceptors(otelconnect.NewInterceptor()),
-	))
-	mux.Handle(grpchealth.NewHandler(
-		grpchealth.NewStaticChecker(paymentconnect.PaymentName),
-		compress1KB,
-	))
-	mux.Handle(grpcreflect.NewHandlerV1(
-		grpcreflect.NewStaticReflector(paymentconnect.PaymentName),
-		compress1KB,
-	))
-	mux.Handle(grpcreflect.NewHandlerV1Alpha(
-		grpcreflect.NewStaticReflector(paymentconnect.PaymentName),
-		compress1KB,
-	))
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
