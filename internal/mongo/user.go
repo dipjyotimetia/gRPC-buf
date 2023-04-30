@@ -8,7 +8,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
-	"github.com/grpc-buf/internal/gen/registration"
+	userv1 "github.com/grpc-buf/internal/gen/registration"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -39,9 +39,9 @@ func hashPassword(password string) (string, error) {
 
 func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.LoginRequest]) (*connect.Response[userv1.LoginResponse], error) {
 	var result User
-	filter := bson.D{{"email", req.Msg.GetEmail()}}
+	filter := bson.D{{Key: "email", Value: req.Msg.GetEmail()}}
 	err := db.FindOne(ctx, filter).Decode(&result)
-	if err == nil {
+	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "User not found")
 	}
 
