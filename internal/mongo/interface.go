@@ -7,7 +7,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	payment "github.com/grpc-buf/internal/gen/payment"
-	"github.com/grpc-buf/internal/gen/registration"
+	userv1 "github.com/grpc-buf/internal/gen/registration"
 	log "github.com/sirupsen/logrus"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -65,6 +65,6 @@ func NewDatabaseConnection() DataStore {
 		log.Fatalf("mongo db connection failed %s", err) //nolint:gocritic
 	}
 	return &Store{
-		client.Database("mydb").Collection("coffee"),
+		client.Database("buf").Collection("grpc"),
 	}
 }
