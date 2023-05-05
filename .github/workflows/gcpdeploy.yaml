@@ -11,6 +11,8 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
+    env:
+      IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_APP_NAME }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -37,20 +39,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+      - name: Build Docker image
+        run: docker build . --tag $IMAGE_NAME
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      #      - name: Test Docker image
+      #        run: docker run $IMAGE_NAME sh -c "go test -v"
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_APP_NAME }}
-          labels: ${{ steps.meta.outputs.labels }}
+      - name: Push Docker image
+        run: docker push $IMAGE_NAME
 
       - id: 'auth-cr'
         uses: 'google-github-actions/auth@v1'
