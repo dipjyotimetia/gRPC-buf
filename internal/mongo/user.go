@@ -17,19 +17,19 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type User struct {
-	id        primitive.ObjectID  `bson:"_id"`
-	email     string              `bson:"email"`
-	password  string              `bson:"password"`
-	firstName string              `bson:"first_name"`
-	lastName  string              `bson:"last_name"`
-	createdAt primitive.Timestamp `bson:"createdAt"`
-	updatedAt primitive.Timestamp `bson:"updatedAt"`
+type user struct {
+	id        primitive.ObjectID
+	email     string
+	password  string
+	firstName string
+	lastName  string
+	createdAt primitive.Timestamp
+	updatedAt primitive.Timestamp
 }
 
 type login struct {
-	email    string `bson:"email"`
-	password string `bson:"password"`
+	email    string
+	password string
 }
 
 // hashPassword takes a plain-text password and returns a hashed password using bcrypt.
@@ -42,7 +42,7 @@ func hashPassword(password string) (string, error) {
 }
 
 func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.LoginRequest]) (*connect.Response[userv1.LoginResponse], error) {
-	var result *login
+	var result login
 	email := req.Msg.GetEmail()
 	filter := bson.D{{Key: "email", Value: email}}
 	err := db.FindOne(ctx, filter).Decode(&result)
@@ -77,7 +77,7 @@ func (db *Store) RegisterUser(ctx context.Context, req *connect.Request[userv1.R
 		log.Fatalf("Error hashing password: %v", err)
 	}
 
-	data := User{
+	data := user{
 		id:        primitive.NewObjectID(),
 		email:     req.Msg.GetEmail(),
 		password:  hashedPassword,
