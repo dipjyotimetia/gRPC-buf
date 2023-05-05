@@ -7,7 +7,6 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 	userv1 "github.com/grpc-buf/internal/gen/registration"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,13 +18,18 @@ import (
 )
 
 type User struct {
-	id        string `bson:"_id"`
-	email     string `bson:"email"`
-	password  string `bson:"password"`
-	firstName string `bson:"first_name"`
-	lastName  string `bson:"last_name"`
-	createdAt string `bson:"createdAt"`
-	updatedAt string `bson:"updatedAt"`
+	id        primitive.ObjectID  `bson:"_id"`
+	email     string              `bson:"email"`
+	password  string              `bson:"password"`
+	firstName string              `bson:"first_name"`
+	lastName  string              `bson:"last_name"`
+	createdAt primitive.Timestamp `bson:"createdAt"`
+	updatedAt primitive.Timestamp `bson:"updatedAt"`
+}
+
+type login struct {
+	email    string `bson:"email"`
+	password string `bson:"password"`
 }
 
 // hashPassword takes a plain-text password and returns a hashed password using bcrypt.
@@ -38,8 +42,9 @@ func hashPassword(password string) (string, error) {
 }
 
 func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.LoginRequest]) (*connect.Response[userv1.LoginResponse], error) {
-	var result User
-	filter := bson.D{{Key: "email", Value: req.Msg.GetEmail()}}
+	var result *login
+	email := req.Msg.GetEmail()
+	filter := bson.D{{Key: "email", Value: email}}
 	err := db.FindOne(ctx, filter).Decode(&result)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "User not found")
@@ -67,20 +72,19 @@ func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.Logi
 }
 
 func (db *Store) RegisterUser(ctx context.Context, req *connect.Request[userv1.RegisterRequest]) (*connect.Response[userv1.RegisterResponse], error) {
-	var data *User
 	hashedPassword, err := hashPassword(req.Msg.GetPassword())
 	if err != nil {
 		log.Fatalf("Error hashing password: %v", err)
 	}
 
-	data = &User{
-		id:        uuid.New().String(),
+	data := User{
+		id:        primitive.NewObjectID(),
 		email:     req.Msg.GetEmail(),
 		password:  hashedPassword,
 		firstName: req.Msg.GetFirstName(),
 		lastName:  req.Msg.GetLastName(),
-		createdAt: timestamppb.Now().String(),
-		updatedAt: timestamppb.Now().String(),
+		createdAt: primitive.Timestamp{T: uint32(time.Now().Unix())},
+		updatedAt: primitive.Timestamp{T: uint32(time.Now().Unix())},
 	}
 
 	res, err := db.InsertOne(ctx, data)
@@ -95,7 +99,7 @@ func (db *Store) RegisterUser(ctx context.Context, req *connect.Request[userv1.R
 
 	response := connect.NewResponse(&userv1.RegisterResponse{
 		Id:        id.Hex(),
-		CreatedAt: nil,
+		CreatedAt: timestamppb.Now(),
 	})
 	response.Header().Set("Some-Other-Header", "hello!")
 	return response, nil
