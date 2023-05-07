@@ -18,18 +18,18 @@ import (
 )
 
 type user struct {
-	id        primitive.ObjectID
-	email     string
-	password  string
-	firstName string
-	lastName  string
-	createdAt primitive.Timestamp
-	updatedAt primitive.Timestamp
+	id        primitive.ObjectID  `bson:"_id"`
+	email     string              `bson:"email"`
+	password  string              `bson:"password"`
+	firstName string              `bson:"firstName"`
+	lastName  string              `bson:"lastName"`
+	createdAt primitive.Timestamp `bson:"createdAt"`
+	updatedAt primitive.Timestamp `bson:"updatedAt"`
 }
 
 type login struct {
-	email    string
-	password string
+	email    string `bson:"email"`
+	password string `bson:"password"`
 }
 
 // hashPassword takes a plain-text password and returns a hashed password using bcrypt.
