@@ -18,18 +18,18 @@ import (
 )
 
 type user struct {
-	id        primitive.ObjectID  `bson:"_id"`
-	email     string              `bson:"email"`
-	password  string              `bson:"password"`
-	firstName string              `bson:"firstName"`
-	lastName  string              `bson:"lastName"`
-	createdAt primitive.Timestamp `bson:"createdAt"`
-	updatedAt primitive.Timestamp `bson:"updatedAt"`
+	Id        primitive.ObjectID  `bson:"_id"`
+	Email     string              `bson:"email"`
+	Password  string              `bson:"password"`
+	FirstName string              `bson:"firstName"`
+	LastName  string              `bson:"lastName"`
+	CreatedAt primitive.Timestamp `bson:"createdAt"`
+	UpdatedAt primitive.Timestamp `bson:"updatedAt"`
 }
 
 type login struct {
-	email    string `bson:"email"`
-	password string `bson:"password"`
+	Email    string `bson:"email"`
+	Password string `bson:"password"`
 }
 
 // hashPassword takes a plain-text password and returns a hashed password using bcrypt.
@@ -50,7 +50,7 @@ func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.Logi
 		return nil, status.Errorf(codes.Unauthenticated, "User not found")
 	}
 
-	if bcrypt.CompareHashAndPassword([]byte(result.password), []byte(req.Msg.GetPassword())) != nil {
+	if bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(req.Msg.GetPassword())) != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "Incorrect password")
 	}
 
@@ -78,13 +78,13 @@ func (db *Store) RegisterUser(ctx context.Context, req *connect.Request[userv1.R
 	}
 
 	data := user{
-		id:        primitive.NewObjectID(),
-		email:     req.Msg.GetEmail(),
-		password:  hashedPassword,
-		firstName: req.Msg.GetFirstName(),
-		lastName:  req.Msg.GetLastName(),
-		createdAt: primitive.Timestamp{T: uint32(time.Now().Unix())},
-		updatedAt: primitive.Timestamp{T: uint32(time.Now().Unix())},
+		Id:        primitive.NewObjectID(),
+		Email:     req.Msg.GetEmail(),
+		Password:  hashedPassword,
+		FirstName: req.Msg.GetFirstName(),
+		LastName:  req.Msg.GetLastName(),
+		CreatedAt: primitive.Timestamp{T: uint32(time.Now().Unix())},
+		UpdatedAt: primitive.Timestamp{T: uint32(time.Now().Unix())},
 	}
 
 	res, err := db.InsertOne(ctx, data)
