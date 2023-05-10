@@ -61,7 +61,7 @@ func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.Logi
 		Audience:  jwt.ClaimStrings{"grpc-buff"},
 		ExpiresAt: &jwt.NumericDate{Time: expirationTime},
 	})
-	tokenString, err := token.SignedString("jwtKey")
+	tokenString, err := token.SignedString([]byte("jwtKey"))
 	if err != nil {
 		return nil, err
 	}
