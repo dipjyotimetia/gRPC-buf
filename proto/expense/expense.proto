@@ -5,24 +5,54 @@ package expense;
 option go_package = "expense/expensepb";
 
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
 
-// Expense information
+// Expense represents a single expense item.
 message Expense {
-  // Unique identifier for the expense
-  int64 expense_id = 1;
-  // Type of the expense
-  ExpenseType expense_type = 2;
-  // Amount spent on the expense
-  double amount = 3;
-  // Additional information, such as address or description
-  string address = 4;
-  // Timestamp for when the expense was created
-  google.protobuf.Timestamp created_at = 5;
+  int32 id = 1; // Unique identifier for the expense.
+  string name = 2; // Name or description of the expense.
+  double amount = 3; // Amount of the expense.
+  string category = 4; // Category of the expense.
+  google.protobuf.Timestamp date = 5; // Date of the expense in "YYYY-MM-DD" format.
 }
 
-// Enumeration of possible expense types
-enum ExpenseType {
-  Shopping = 0;
-  Grocery = 1;
-  Food = 2;
+// ExpenseList is a list of expenses.
+message ExpenseList {
+  repeated Expense expenses = 1;
+}
+
+// AddExpenseRequest is the request type for the AddExpense RPC method.
+message AddExpenseRequest {
+  Expense expense = 1; // The expense to add.
+}
+
+// AddExpenseResponse is the response type for the AddExpense RPC method.
+message AddExpenseResponse {
+  Expense expense = 1; // The added expense.
+}
+
+// GetExpensesRequest is the request type for the GetExpenses RPC method.
+message GetExpensesRequest {}
+
+// GetExpensesResponse is the response type for the GetExpenses RPC method.
+message GetExpensesResponse {
+  ExpenseList expenses = 1; // The list of expenses.
+}
+
+// Service definition.
+service ExpenseService {
+  // AddExpense adds a new expense.
+  rpc AddExpense (AddExpenseRequest) returns (AddExpenseResponse) {
+    option (google.api.http) = {
+      post: "/v1/expenses"
+      body: "expense"
+    };
+  }
+
+  // GetExpenses gets a list of all expenses.
+  rpc GetExpenses (GetExpensesRequest) returns (GetExpensesResponse) {
+    option (google.api.http) = {
+      get: "/v1/expenses"
+    };
+  }
 }
