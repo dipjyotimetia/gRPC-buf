@@ -8,7 +8,7 @@ option go_package = "notify/notifypb";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 
-// Notification represents a single notification item.
+// Notification represent a single notification item.
 message Notification {
   int32 id = 1; // Unique identifier for the notification.
   string title = 2; // Title of the notification.
