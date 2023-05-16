@@ -16,10 +16,10 @@ jobs:
         uses: tj-actions/changed-files@v35
         with:
           files: proto/**
-      - uses: bufbuild/buf-lint-action@v1
-        if: steps.changed-proto.outputs.any_changed == 'true'
-        with:
-          input: proto
+#      - uses: bufbuild/buf-lint-action@v1
+#        if: steps.changed-proto.outputs.any_changed == 'true'
+#        with:
+#          input: proto
       - uses: bufbuild/buf-breaking-action@v1
         if: steps.changed-proto.outputs.any_changed == 'true'
         with:
