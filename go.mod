@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/bufbuild/connect-go v1.7.0
-	github.com/bufbuild/connect-grpchealth-go v1.0.0
+	github.com/bufbuild/connect-grpchealth-go v1.1.0
 	github.com/bufbuild/connect-grpcreflect-go v1.0.0
 	github.com/bufbuild/connect-opentelemetry-go v0.2.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
