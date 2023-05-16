@@ -11,7 +11,13 @@ jobs:
       - uses: bufbuild/buf-setup-action@v1
         with:
           github_token: ${{ github.token }}
+      - name: Get changed files in the proto folder
+        id: changed-proto
+        uses: tj-actions/changed-files@v35
+        with:
+          files: proto/**
       - name: Push to schema registry
+        if: steps.changed-proto.outputs.any_changed == 'true'
         uses: bufbuild/buf-push-action@v1
         with:
           input: "proto"
