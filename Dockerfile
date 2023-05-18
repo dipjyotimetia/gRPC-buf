@@ -8,12 +8,14 @@ WORKDIR /app
 
 # We want to populate the module cache based on the go.{mod,sum} files.
 COPY go.* ./
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
 COPY . .
 
 # Build the Go app
-RUN CGO_ENABLED=0 GOOS=linux go build -a -o ./server ./cmd
+RUN --mount=type=cache,target=/go/pkg/mod \
+    CGO_ENABLED=0 GOOS=linux go build -a -o ./server ./cmd
 
 # second stage
 FROM debian:buster-slim
