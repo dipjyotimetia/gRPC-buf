@@ -13,6 +13,7 @@ jobs:
       id-token: 'write'
     env:
       IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_APP_NAME }}
+      DOCKER_BUILDKIT: 1
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
