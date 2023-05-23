@@ -34,7 +34,7 @@ func Run() error {
 	mux := setupHandler()
 
 	log.SetFormatter(&log.JSONFormatter{})
-	log.Info("Starting grpc server")
+	log.Info("Starting gRPC server")
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
@@ -51,8 +51,10 @@ func Run() error {
 		WriteTimeout:      5 * time.Minute,
 		MaxHeaderBytes:    8 * 1024, // 8KiB
 	}
+
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP listen and serve: %v", err)
@@ -60,10 +62,12 @@ func Run() error {
 	}()
 
 	<-signals
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
+
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("HTTP shutdown: %v", err) //nolint:gocritic
+		log.Fatalf("HTTP shutdown: %v", err)
 	}
 	return nil
 }

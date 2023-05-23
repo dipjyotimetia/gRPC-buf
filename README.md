@@ -6,10 +6,11 @@ publishing CloudEvents to Google Cloud Pub/Sub and Apache Kafka topics.
 
 ## Table of Contents
 
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Deployment](#deployment)
+- [Project Name: gRPC-buf](#project-name-grpc-buf)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
 
 ## Features
 
@@ -29,19 +30,6 @@ publishing CloudEvents to Google Cloud Pub/Sub and Apache Kafka topics.
 1. Clone the repository:
 
 ```bash
-$ git clone https://github.com/yourusername/GoGRPCRestAPI.git
+$ git clone https://github.com/dipjoytimetia/gRPC-buf.git
 $ cd gRPC-buf
-```
-
-2. Deploy the Cloud Run service:
-
-```bash
-
-$ docker build -t gcr.io/your-project-id/go-grpc-rest-api:v1 .
-$ gcloud auth configure-docker
-$ docker push gcr.io/your-project-id/go-grpc-rest-api:v1
-$ gcloud run deploy go-grpc-rest-api --image gcr.io/your-project-id/go-grpc-rest-api:v1 --platform managed --region your-region --allow-unauthenticated
-$ SERVICE_URL=$(gcloud run services describe go-grpc-rest-api --platform managed --region your-region --format 'value(status.url)')
-$ curl $SERVICE_URL
-
 ```

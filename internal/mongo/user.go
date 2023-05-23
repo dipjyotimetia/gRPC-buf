@@ -17,8 +17,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type user struct {
-	Id        primitive.ObjectID  `bson:"_id"`
+type User struct {
+	ID        primitive.ObjectID  `bson:"_id"`
 	Email     string              `bson:"email"`
 	Password  string              `bson:"password"`
 	FirstName string              `bson:"firstName"`
@@ -27,13 +27,13 @@ type user struct {
 	UpdatedAt primitive.Timestamp `bson:"updatedAt"`
 }
 
-type login struct {
+type LoginCredentials struct {
 	Email    string `bson:"email"`
 	Password string `bson:"password"`
 }
 
-// hashPassword takes a plain-text password and returns a hashed password using bcrypt.
-func hashPassword(password string) (string, error) {
+// HashPassword takes a plain-text password and returns a hashed password using bcrypt.
+func HashPassword(password string) (string, error) {
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
@@ -42,7 +42,7 @@ func hashPassword(password string) (string, error) {
 }
 
 func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.LoginRequest]) (*connect.Response[userv1.LoginResponse], error) {
-	var result login
+	var result User
 	email := req.Msg.GetEmail()
 	filter := bson.D{{Key: "email", Value: email}}
 	err := db.FindOne(ctx, filter).Decode(&result)
@@ -54,7 +54,7 @@ func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.Logi
 		return nil, status.Errorf(codes.Unauthenticated, "Incorrect password")
 	}
 
-	expirationTime := time.Now().Add(15 * time.Minute) // expiration time of the token ->15 mins
+	expirationTime := time.Now().Add(15 * time.Minute) // Expiration time of the token: 15 minutes
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    "grpc-buff",
 		Subject:   "grpc-buff",
@@ -73,13 +73,13 @@ func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.Logi
 }
 
 func (db *Store) RegisterUser(ctx context.Context, req *connect.Request[userv1.RegisterRequest]) (*connect.Response[userv1.RegisterResponse], error) {
-	hashedPassword, err := hashPassword(req.Msg.GetPassword())
+	hashedPassword, err := HashPassword(req.Msg.GetPassword())
 	if err != nil {
 		log.Fatalf("Error hashing password: %v", err)
 	}
 
-	data := user{
-		Id:        primitive.NewObjectID(),
+	data := User{
+		ID:        primitive.NewObjectID(),
 		Email:     req.Msg.GetEmail(),
 		Password:  hashedPassword,
 		FirstName: req.Msg.GetFirstName(),
@@ -95,7 +95,7 @@ func (db *Store) RegisterUser(ctx context.Context, req *connect.Request[userv1.R
 
 	id, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("Cannot convert to OID: %v", err))
+		return nil, status.Errorf(codes.Internal, "Cannot convert to OID")
 	}
 
 	response := connect.NewResponse(&userv1.RegisterResponse{

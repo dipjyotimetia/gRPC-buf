@@ -13,24 +13,26 @@ import (
 )
 
 type Payment struct {
-	cardNO   int64            `bson:"cardNo"`
-	cardType payment.CardType `bson:"card_type"`
-	name     string           `bson:"name"`
-	address  string           `bson:"address"`
-	amount   float32          `bson:"amount"`
+	CardNo   int64            `bson:"cardNo"`
+	CardType payment.CardType `bson:"card_type"`
+	Name     string           `bson:"name"`
+	Address  string           `bson:"address"`
+	Amount   float32          `bson:"amount"`
 }
 
 func (db *Store) MakePayment(ctx context.Context, req *connect.Request[payment.PaymentRequest]) (*connect.Response[payment.PaymentResponse], error) {
 	var data *Payment
 	name := req.Msg.GetName()
 	amount := req.Msg.GetAmount()
-	if VerifyCard(req.Msg.CardNo) && req.Msg.Amount >= 0.0 {
+	cardNo := req.Msg.GetCardNo()
+	address := req.Msg.GetAddress()
+	if VerifyCard(cardNo) && amount >= 0.0 {
 		data = &Payment{
-			cardNO:   req.Msg.CardNo,
-			cardType: payment.CardType_DebitCard,
-			name:     req.Msg.Name,
-			address:  req.Msg.Address[0],
-			amount:   req.Msg.Amount,
+			CardNo:   cardNo,
+			CardType: payment.CardType_DebitCard,
+			Name:     name,
+			Address:  address[0],
+			Amount:   amount,
 		}
 	} else {
 		return nil, status.Errorf(codes.FailedPrecondition, "field validation failed")
@@ -43,10 +45,10 @@ func (db *Store) MakePayment(ctx context.Context, req *connect.Request[payment.P
 
 	_, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("Cannot convert to OID: %v", err))
+		return nil, status.Errorf(codes.Internal, "Cannot convert to OID")
 	}
 
-	log.Println("Got a payment with a name ", name, "amount", amount)
+	log.Println("Received payment with name:", name, "and amount:", amount)
 	log.Println(req.Header().Get("Some-Header"))
 	response := connect.NewResponse(&payment.PaymentResponse{
 		Response: &payment.PaymentResponse_Paid{Paid: true},
