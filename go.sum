@@ -2,8 +2,8 @@ github.com/bufbuild/connect-go v1.7.0 h1:MGp82v7SCza+3RhsVhV7aMikwxvI3ZfD72YiGt8
 github.com/bufbuild/connect-go v1.7.0/go.mod h1:GmMJYR6orFqD0Y6ZgX8pwQ8j9baizDrIQMm1/a6LnHk=
 github.com/bufbuild/connect-grpchealth-go v1.1.0 h1:Yri24hjiRwZQK87N6ybwXiv+Ozg8KtH2n/OLcvkNQds=
 github.com/bufbuild/connect-grpchealth-go v1.1.0/go.mod h1:9KbkogLoUIxOTPKyWDv5evkawr1IYXaHax4XoUHCgoQ=
-github.com/bufbuild/connect-grpcreflect-go v1.0.0 h1:zWsLFYqrT1O2sNJFYfTXI5WxbAyiY2dvevvnJHPtV5A=
-github.com/bufbuild/connect-grpcreflect-go v1.0.0/go.mod h1:825I20H8bfE9rLnBH/046JSpmm3uwpNYdG4duCARetc=
+github.com/bufbuild/connect-grpcreflect-go v1.1.0 h1:T0FKu1y9zZW4cjHuF+Q7jIN6ek8HTpCxOP8ZsORZICg=
+github.com/bufbuild/connect-grpcreflect-go v1.1.0/go.mod h1:AxcY2fSAr+oQQuu+K35qy2VDtX+LWr7SrS2SvfjY898=
 github.com/bufbuild/connect-opentelemetry-go v0.2.0 h1:GRziom+3DSYHv0bWGARhgD8WXYWnd8NDiHNVqK2sSEg=
 github.com/bufbuild/connect-opentelemetry-go v0.2.0/go.mod h1:I+IU6e9kQZ0orGg0JpdLNWLtSROe3GAUXvuQBT+zBSw=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
