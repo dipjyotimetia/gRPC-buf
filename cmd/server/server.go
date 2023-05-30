@@ -13,11 +13,6 @@ import (
 	"github.com/grpc-buf/internal/service"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric/global"
-	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/metric"
-	"go.opentelemetry.io/otel/sdk/trace"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -29,8 +24,6 @@ var (
 )
 
 func Run() error {
-	// Set up OpenTelemetry globals
-	setupOtel()
 	mux := setupHandler()
 
 	log.SetFormatter(&log.JSONFormatter{})
@@ -70,13 +63,6 @@ func Run() error {
 		log.Fatalf("HTTP shutdown: %v", err)
 	}
 	return nil
-}
-
-func setupOtel() {
-	// Exporting to different platforms can be configured here
-	otel.SetTracerProvider(trace.NewTracerProvider())
-	global.SetMeterProvider(metric.NewMeterProvider())
-	otel.SetTextMapPropagator(propagation.TraceContext{})
 }
 
 func newCORS() *cors.Cors {
