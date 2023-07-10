@@ -6,7 +6,7 @@ require (
 	github.com/bufbuild/connect-go v1.9.0
 	github.com/bufbuild/connect-grpchealth-go v1.1.1
 	github.com/bufbuild/connect-grpcreflect-go v1.1.0
-	github.com/bufbuild/connect-opentelemetry-go v0.3.0
+	github.com/bufbuild/connect-opentelemetry-go v0.4.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/rs/cors v1.9.0
 	github.com/sirupsen/logrus v1.9.3
