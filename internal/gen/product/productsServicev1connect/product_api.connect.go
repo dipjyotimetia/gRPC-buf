@@ -5,9 +5,9 @@
 package productsservicev1connect
 
 import (
+	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	connect_go "github.com/bufbuild/connect-go"
 	product "github.com/grpc-buf/internal/gen/product"
 	http "net/http"
 	strings "strings"
@@ -18,7 +18,7 @@ import (
 // generated with a version of connect newer than the one compiled into your binary. You can fix the
 // problem by either regenerating this code with an older version of connect or updating the connect
 // version compiled into your binary.
-const _ = connect_go.IsAtLeastVersion0_1_0
+const _ = connect.IsAtLeastVersion0_1_0
 
 const (
 	// ProductsServiceName is the fully-qualified name of the ProductsService service.
@@ -45,10 +45,10 @@ const (
 
 // ProductsServiceClient is a client for the rpc.productsservice.v1.ProductsService service.
 type ProductsServiceClient interface {
-	Create(context.Context, *connect_go.Request[product.CreateReq]) (*connect_go.Response[product.CreateRes], error)
-	Update(context.Context, *connect_go.Request[product.UpdateReq]) (*connect_go.Response[product.UpdateRes], error)
-	GetByID(context.Context, *connect_go.Request[product.GetByIDReq]) (*connect_go.Response[product.GetByIDRes], error)
-	Search(context.Context, *connect_go.Request[product.SearchReq]) (*connect_go.Response[product.SearchRes], error)
+	Create(context.Context, *connect.Request[product.CreateReq]) (*connect.Response[product.CreateRes], error)
+	Update(context.Context, *connect.Request[product.UpdateReq]) (*connect.Response[product.UpdateRes], error)
+	GetByID(context.Context, *connect.Request[product.GetByIDReq]) (*connect.Response[product.GetByIDRes], error)
+	Search(context.Context, *connect.Request[product.SearchReq]) (*connect.Response[product.SearchRes], error)
 }
 
 // NewProductsServiceClient constructs a client for the rpc.productsservice.v1.ProductsService
@@ -58,25 +58,25 @@ type ProductsServiceClient interface {
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewProductsServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) ProductsServiceClient {
+func NewProductsServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) ProductsServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &productsServiceClient{
-		create: connect_go.NewClient[product.CreateReq, product.CreateRes](
+		create: connect.NewClient[product.CreateReq, product.CreateRes](
 			httpClient,
 			baseURL+ProductsServiceCreateProcedure,
 			opts...,
 		),
-		update: connect_go.NewClient[product.UpdateReq, product.UpdateRes](
+		update: connect.NewClient[product.UpdateReq, product.UpdateRes](
 			httpClient,
 			baseURL+ProductsServiceUpdateProcedure,
 			opts...,
 		),
-		getByID: connect_go.NewClient[product.GetByIDReq, product.GetByIDRes](
+		getByID: connect.NewClient[product.GetByIDReq, product.GetByIDRes](
 			httpClient,
 			baseURL+ProductsServiceGetByIDProcedure,
 			opts...,
 		),
-		search: connect_go.NewClient[product.SearchReq, product.SearchRes](
+		search: connect.NewClient[product.SearchReq, product.SearchRes](
 			httpClient,
 			baseURL+ProductsServiceSearchProcedure,
 			opts...,
@@ -86,39 +86,39 @@ func NewProductsServiceClient(httpClient connect_go.HTTPClient, baseURL string, 
 
 // productsServiceClient implements ProductsServiceClient.
 type productsServiceClient struct {
-	create  *connect_go.Client[product.CreateReq, product.CreateRes]
-	update  *connect_go.Client[product.UpdateReq, product.UpdateRes]
-	getByID *connect_go.Client[product.GetByIDReq, product.GetByIDRes]
-	search  *connect_go.Client[product.SearchReq, product.SearchRes]
+	create  *connect.Client[product.CreateReq, product.CreateRes]
+	update  *connect.Client[product.UpdateReq, product.UpdateRes]
+	getByID *connect.Client[product.GetByIDReq, product.GetByIDRes]
+	search  *connect.Client[product.SearchReq, product.SearchRes]
 }
 
 // Create calls rpc.productsservice.v1.ProductsService.Create.
-func (c *productsServiceClient) Create(ctx context.Context, req *connect_go.Request[product.CreateReq]) (*connect_go.Response[product.CreateRes], error) {
+func (c *productsServiceClient) Create(ctx context.Context, req *connect.Request[product.CreateReq]) (*connect.Response[product.CreateRes], error) {
 	return c.create.CallUnary(ctx, req)
 }
 
 // Update calls rpc.productsservice.v1.ProductsService.Update.
-func (c *productsServiceClient) Update(ctx context.Context, req *connect_go.Request[product.UpdateReq]) (*connect_go.Response[product.UpdateRes], error) {
+func (c *productsServiceClient) Update(ctx context.Context, req *connect.Request[product.UpdateReq]) (*connect.Response[product.UpdateRes], error) {
 	return c.update.CallUnary(ctx, req)
 }
 
 // GetByID calls rpc.productsservice.v1.ProductsService.GetByID.
-func (c *productsServiceClient) GetByID(ctx context.Context, req *connect_go.Request[product.GetByIDReq]) (*connect_go.Response[product.GetByIDRes], error) {
+func (c *productsServiceClient) GetByID(ctx context.Context, req *connect.Request[product.GetByIDReq]) (*connect.Response[product.GetByIDRes], error) {
 	return c.getByID.CallUnary(ctx, req)
 }
 
 // Search calls rpc.productsservice.v1.ProductsService.Search.
-func (c *productsServiceClient) Search(ctx context.Context, req *connect_go.Request[product.SearchReq]) (*connect_go.Response[product.SearchRes], error) {
+func (c *productsServiceClient) Search(ctx context.Context, req *connect.Request[product.SearchReq]) (*connect.Response[product.SearchRes], error) {
 	return c.search.CallUnary(ctx, req)
 }
 
 // ProductsServiceHandler is an implementation of the rpc.productsservice.v1.ProductsService
 // service.
 type ProductsServiceHandler interface {
-	Create(context.Context, *connect_go.Request[product.CreateReq]) (*connect_go.Response[product.CreateRes], error)
-	Update(context.Context, *connect_go.Request[product.UpdateReq]) (*connect_go.Response[product.UpdateRes], error)
-	GetByID(context.Context, *connect_go.Request[product.GetByIDReq]) (*connect_go.Response[product.GetByIDRes], error)
-	Search(context.Context, *connect_go.Request[product.SearchReq]) (*connect_go.Response[product.SearchRes], error)
+	Create(context.Context, *connect.Request[product.CreateReq]) (*connect.Response[product.CreateRes], error)
+	Update(context.Context, *connect.Request[product.UpdateReq]) (*connect.Response[product.UpdateRes], error)
+	GetByID(context.Context, *connect.Request[product.GetByIDReq]) (*connect.Response[product.GetByIDRes], error)
+	Search(context.Context, *connect.Request[product.SearchReq]) (*connect.Response[product.SearchRes], error)
 }
 
 // NewProductsServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -126,46 +126,58 @@ type ProductsServiceHandler interface {
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewProductsServiceHandler(svc ProductsServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	mux := http.NewServeMux()
-	mux.Handle(ProductsServiceCreateProcedure, connect_go.NewUnaryHandler(
+func NewProductsServiceHandler(svc ProductsServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	productsServiceCreateHandler := connect.NewUnaryHandler(
 		ProductsServiceCreateProcedure,
 		svc.Create,
 		opts...,
-	))
-	mux.Handle(ProductsServiceUpdateProcedure, connect_go.NewUnaryHandler(
+	)
+	productsServiceUpdateHandler := connect.NewUnaryHandler(
 		ProductsServiceUpdateProcedure,
 		svc.Update,
 		opts...,
-	))
-	mux.Handle(ProductsServiceGetByIDProcedure, connect_go.NewUnaryHandler(
+	)
+	productsServiceGetByIDHandler := connect.NewUnaryHandler(
 		ProductsServiceGetByIDProcedure,
 		svc.GetByID,
 		opts...,
-	))
-	mux.Handle(ProductsServiceSearchProcedure, connect_go.NewUnaryHandler(
+	)
+	productsServiceSearchHandler := connect.NewUnaryHandler(
 		ProductsServiceSearchProcedure,
 		svc.Search,
 		opts...,
-	))
-	return "/rpc.productsservice.v1.ProductsService/", mux
+	)
+	return "/rpc.productsservice.v1.ProductsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case ProductsServiceCreateProcedure:
+			productsServiceCreateHandler.ServeHTTP(w, r)
+		case ProductsServiceUpdateProcedure:
+			productsServiceUpdateHandler.ServeHTTP(w, r)
+		case ProductsServiceGetByIDProcedure:
+			productsServiceGetByIDHandler.ServeHTTP(w, r)
+		case ProductsServiceSearchProcedure:
+			productsServiceSearchHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // UnimplementedProductsServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedProductsServiceHandler struct{}
 
-func (UnimplementedProductsServiceHandler) Create(context.Context, *connect_go.Request[product.CreateReq]) (*connect_go.Response[product.CreateRes], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("rpc.productsservice.v1.ProductsService.Create is not implemented"))
+func (UnimplementedProductsServiceHandler) Create(context.Context, *connect.Request[product.CreateReq]) (*connect.Response[product.CreateRes], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.productsservice.v1.ProductsService.Create is not implemented"))
 }
 
-func (UnimplementedProductsServiceHandler) Update(context.Context, *connect_go.Request[product.UpdateReq]) (*connect_go.Response[product.UpdateRes], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("rpc.productsservice.v1.ProductsService.Update is not implemented"))
+func (UnimplementedProductsServiceHandler) Update(context.Context, *connect.Request[product.UpdateReq]) (*connect.Response[product.UpdateRes], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.productsservice.v1.ProductsService.Update is not implemented"))
 }
 
-func (UnimplementedProductsServiceHandler) GetByID(context.Context, *connect_go.Request[product.GetByIDReq]) (*connect_go.Response[product.GetByIDRes], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("rpc.productsservice.v1.ProductsService.GetByID is not implemented"))
+func (UnimplementedProductsServiceHandler) GetByID(context.Context, *connect.Request[product.GetByIDReq]) (*connect.Response[product.GetByIDRes], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.productsservice.v1.ProductsService.GetByID is not implemented"))
 }
 
-func (UnimplementedProductsServiceHandler) Search(context.Context, *connect_go.Request[product.SearchReq]) (*connect_go.Response[product.SearchRes], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("rpc.productsservice.v1.ProductsService.Search is not implemented"))
+func (UnimplementedProductsServiceHandler) Search(context.Context, *connect.Request[product.SearchReq]) (*connect.Response[product.SearchRes], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.productsservice.v1.ProductsService.Search is not implemented"))
 }

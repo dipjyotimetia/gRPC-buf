@@ -1,19 +1,19 @@
 module github.com/grpc-buf
 
-go 1.20
+go 1.21
 
 require (
-	github.com/bufbuild/connect-go v1.10.0
-	github.com/bufbuild/connect-grpchealth-go v1.1.1
-	github.com/bufbuild/connect-grpcreflect-go v1.1.0
-	github.com/bufbuild/connect-opentelemetry-go v0.4.0
+	connectrpc.com/connect v1.11.0
+	connectrpc.com/grpchealth v1.2.0
+	connectrpc.com/grpcreflect v1.2.0
+	connectrpc.com/otelconnect v0.5.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/rs/cors v1.9.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	go.mongodb.org/mongo-driver v1.12.1
 	golang.org/x/crypto v0.12.0
-	golang.org/x/net v0.13.0
+	golang.org/x/net v0.14.0
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
 )
@@ -27,7 +27,7 @@ require (
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
@@ -38,6 +38,6 @@ require (
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230731193218-e0aa005b6bdf // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230807174057-1744710a1577 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

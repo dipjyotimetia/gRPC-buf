@@ -5,9 +5,9 @@
 package userv1connect
 
 import (
+	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	connect_go "github.com/bufbuild/connect-go"
 	registration "github.com/grpc-buf/internal/gen/registration"
 	http "net/http"
 	strings "strings"
@@ -18,7 +18,7 @@ import (
 // generated with a version of connect newer than the one compiled into your binary. You can fix the
 // problem by either regenerating this code with an older version of connect or updating the connect
 // version compiled into your binary.
-const _ = connect_go.IsAtLeastVersion0_1_0
+const _ = connect.IsAtLeastVersion0_1_0
 
 const (
 	// UserServiceName is the fully-qualified name of the UserService service.
@@ -42,8 +42,8 @@ const (
 
 // UserServiceClient is a client for the rpc.user.v1.UserService service.
 type UserServiceClient interface {
-	RegisterUser(context.Context, *connect_go.Request[registration.RegisterRequest]) (*connect_go.Response[registration.RegisterResponse], error)
-	LoginUser(context.Context, *connect_go.Request[registration.LoginRequest]) (*connect_go.Response[registration.LoginResponse], error)
+	RegisterUser(context.Context, *connect.Request[registration.RegisterRequest]) (*connect.Response[registration.RegisterResponse], error)
+	LoginUser(context.Context, *connect.Request[registration.LoginRequest]) (*connect.Response[registration.LoginResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the rpc.user.v1.UserService service. By default, it
@@ -53,15 +53,15 @@ type UserServiceClient interface {
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) UserServiceClient {
+func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) UserServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &userServiceClient{
-		registerUser: connect_go.NewClient[registration.RegisterRequest, registration.RegisterResponse](
+		registerUser: connect.NewClient[registration.RegisterRequest, registration.RegisterResponse](
 			httpClient,
 			baseURL+UserServiceRegisterUserProcedure,
 			opts...,
 		),
-		loginUser: connect_go.NewClient[registration.LoginRequest, registration.LoginResponse](
+		loginUser: connect.NewClient[registration.LoginRequest, registration.LoginResponse](
 			httpClient,
 			baseURL+UserServiceLoginUserProcedure,
 			opts...,
@@ -71,24 +71,24 @@ func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	registerUser *connect_go.Client[registration.RegisterRequest, registration.RegisterResponse]
-	loginUser    *connect_go.Client[registration.LoginRequest, registration.LoginResponse]
+	registerUser *connect.Client[registration.RegisterRequest, registration.RegisterResponse]
+	loginUser    *connect.Client[registration.LoginRequest, registration.LoginResponse]
 }
 
 // RegisterUser calls rpc.user.v1.UserService.RegisterUser.
-func (c *userServiceClient) RegisterUser(ctx context.Context, req *connect_go.Request[registration.RegisterRequest]) (*connect_go.Response[registration.RegisterResponse], error) {
+func (c *userServiceClient) RegisterUser(ctx context.Context, req *connect.Request[registration.RegisterRequest]) (*connect.Response[registration.RegisterResponse], error) {
 	return c.registerUser.CallUnary(ctx, req)
 }
 
 // LoginUser calls rpc.user.v1.UserService.LoginUser.
-func (c *userServiceClient) LoginUser(ctx context.Context, req *connect_go.Request[registration.LoginRequest]) (*connect_go.Response[registration.LoginResponse], error) {
+func (c *userServiceClient) LoginUser(ctx context.Context, req *connect.Request[registration.LoginRequest]) (*connect.Response[registration.LoginResponse], error) {
 	return c.loginUser.CallUnary(ctx, req)
 }
 
 // UserServiceHandler is an implementation of the rpc.user.v1.UserService service.
 type UserServiceHandler interface {
-	RegisterUser(context.Context, *connect_go.Request[registration.RegisterRequest]) (*connect_go.Response[registration.RegisterResponse], error)
-	LoginUser(context.Context, *connect_go.Request[registration.LoginRequest]) (*connect_go.Response[registration.LoginResponse], error)
+	RegisterUser(context.Context, *connect.Request[registration.RegisterRequest]) (*connect.Response[registration.RegisterResponse], error)
+	LoginUser(context.Context, *connect.Request[registration.LoginRequest]) (*connect.Response[registration.LoginResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -96,28 +96,36 @@ type UserServiceHandler interface {
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	mux := http.NewServeMux()
-	mux.Handle(UserServiceRegisterUserProcedure, connect_go.NewUnaryHandler(
+func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	userServiceRegisterUserHandler := connect.NewUnaryHandler(
 		UserServiceRegisterUserProcedure,
 		svc.RegisterUser,
 		opts...,
-	))
-	mux.Handle(UserServiceLoginUserProcedure, connect_go.NewUnaryHandler(
+	)
+	userServiceLoginUserHandler := connect.NewUnaryHandler(
 		UserServiceLoginUserProcedure,
 		svc.LoginUser,
 		opts...,
-	))
-	return "/rpc.user.v1.UserService/", mux
+	)
+	return "/rpc.user.v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case UserServiceRegisterUserProcedure:
+			userServiceRegisterUserHandler.ServeHTTP(w, r)
+		case UserServiceLoginUserProcedure:
+			userServiceLoginUserHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // UnimplementedUserServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedUserServiceHandler struct{}
 
-func (UnimplementedUserServiceHandler) RegisterUser(context.Context, *connect_go.Request[registration.RegisterRequest]) (*connect_go.Response[registration.RegisterResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("rpc.user.v1.UserService.RegisterUser is not implemented"))
+func (UnimplementedUserServiceHandler) RegisterUser(context.Context, *connect.Request[registration.RegisterRequest]) (*connect.Response[registration.RegisterResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.user.v1.UserService.RegisterUser is not implemented"))
 }
 
-func (UnimplementedUserServiceHandler) LoginUser(context.Context, *connect_go.Request[registration.LoginRequest]) (*connect_go.Response[registration.LoginResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("rpc.user.v1.UserService.LoginUser is not implemented"))
+func (UnimplementedUserServiceHandler) LoginUser(context.Context, *connect.Request[registration.LoginRequest]) (*connect.Response[registration.LoginResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.user.v1.UserService.LoginUser is not implemented"))
 }

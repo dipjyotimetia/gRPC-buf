@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,7 +13,6 @@ import (
 	"github.com/grpc-buf/internal/mongo"
 	"github.com/grpc-buf/internal/service"
 	"github.com/rs/cors"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -25,9 +25,7 @@ var (
 
 func Run() error {
 	mux := setupHandler()
-
-	log.SetFormatter(&log.JSONFormatter{})
-	log.Info("Starting gRPC server")
+	slog.Info("Starting gRPC server")
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
@@ -50,7 +48,7 @@ func Run() error {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("HTTP listen and serve: %v", err)
+			slog.Error("HTTP listen and serve: %v", err)
 		}
 	}()
 
@@ -60,7 +58,7 @@ func Run() error {
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("HTTP shutdown: %v", err)
+		slog.Error("HTTP shutdown: %v", err)
 	}
 	return nil
 }

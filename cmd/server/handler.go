@@ -3,10 +3,10 @@ package server
 import (
 	"net/http"
 
-	"github.com/bufbuild/connect-go"
-	grpchealth "github.com/bufbuild/connect-grpchealth-go"
-	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
-	otelconnect "github.com/bufbuild/connect-opentelemetry-go"
+	"connectrpc.com/connect"
+	"connectrpc.com/grpchealth"
+	"connectrpc.com/grpcreflect"
+	"connectrpc.com/otelconnect"
 	"github.com/grpc-buf/internal/gen/payment/paymentv1connect"
 	"github.com/grpc-buf/internal/gen/registration/userv1connect"
 )

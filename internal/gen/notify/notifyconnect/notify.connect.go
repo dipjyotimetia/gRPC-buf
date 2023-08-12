@@ -5,9 +5,9 @@
 package notifyconnect
 
 import (
+	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	connect_go "github.com/bufbuild/connect-go"
 	notify "github.com/grpc-buf/internal/gen/notify"
 	http "net/http"
 	strings "strings"
@@ -18,7 +18,7 @@ import (
 // generated with a version of connect newer than the one compiled into your binary. You can fix the
 // problem by either regenerating this code with an older version of connect or updating the connect
 // version compiled into your binary.
-const _ = connect_go.IsAtLeastVersion0_1_0
+const _ = connect.IsAtLeastVersion0_1_0
 
 const (
 	// NotificationServiceName is the fully-qualified name of the NotificationService service.
@@ -44,9 +44,9 @@ const (
 // NotificationServiceClient is a client for the notify.NotificationService service.
 type NotificationServiceClient interface {
 	// CreateNotification creates a new notification.
-	CreateNotification(context.Context, *connect_go.Request[notify.CreateNotificationRequest]) (*connect_go.Response[notify.CreateNotificationResponse], error)
+	CreateNotification(context.Context, *connect.Request[notify.CreateNotificationRequest]) (*connect.Response[notify.CreateNotificationResponse], error)
 	// GetNotifications gets a list of all notifications for a specific user.
-	GetNotifications(context.Context, *connect_go.Request[notify.GetNotificationsRequest]) (*connect_go.Response[notify.GetNotificationsResponse], error)
+	GetNotifications(context.Context, *connect.Request[notify.GetNotificationsRequest]) (*connect.Response[notify.GetNotificationsResponse], error)
 }
 
 // NewNotificationServiceClient constructs a client for the notify.NotificationService service. By
@@ -56,15 +56,15 @@ type NotificationServiceClient interface {
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewNotificationServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) NotificationServiceClient {
+func NewNotificationServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) NotificationServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &notificationServiceClient{
-		createNotification: connect_go.NewClient[notify.CreateNotificationRequest, notify.CreateNotificationResponse](
+		createNotification: connect.NewClient[notify.CreateNotificationRequest, notify.CreateNotificationResponse](
 			httpClient,
 			baseURL+NotificationServiceCreateNotificationProcedure,
 			opts...,
 		),
-		getNotifications: connect_go.NewClient[notify.GetNotificationsRequest, notify.GetNotificationsResponse](
+		getNotifications: connect.NewClient[notify.GetNotificationsRequest, notify.GetNotificationsResponse](
 			httpClient,
 			baseURL+NotificationServiceGetNotificationsProcedure,
 			opts...,
@@ -74,26 +74,26 @@ func NewNotificationServiceClient(httpClient connect_go.HTTPClient, baseURL stri
 
 // notificationServiceClient implements NotificationServiceClient.
 type notificationServiceClient struct {
-	createNotification *connect_go.Client[notify.CreateNotificationRequest, notify.CreateNotificationResponse]
-	getNotifications   *connect_go.Client[notify.GetNotificationsRequest, notify.GetNotificationsResponse]
+	createNotification *connect.Client[notify.CreateNotificationRequest, notify.CreateNotificationResponse]
+	getNotifications   *connect.Client[notify.GetNotificationsRequest, notify.GetNotificationsResponse]
 }
 
 // CreateNotification calls notify.NotificationService.CreateNotification.
-func (c *notificationServiceClient) CreateNotification(ctx context.Context, req *connect_go.Request[notify.CreateNotificationRequest]) (*connect_go.Response[notify.CreateNotificationResponse], error) {
+func (c *notificationServiceClient) CreateNotification(ctx context.Context, req *connect.Request[notify.CreateNotificationRequest]) (*connect.Response[notify.CreateNotificationResponse], error) {
 	return c.createNotification.CallUnary(ctx, req)
 }
 
 // GetNotifications calls notify.NotificationService.GetNotifications.
-func (c *notificationServiceClient) GetNotifications(ctx context.Context, req *connect_go.Request[notify.GetNotificationsRequest]) (*connect_go.Response[notify.GetNotificationsResponse], error) {
+func (c *notificationServiceClient) GetNotifications(ctx context.Context, req *connect.Request[notify.GetNotificationsRequest]) (*connect.Response[notify.GetNotificationsResponse], error) {
 	return c.getNotifications.CallUnary(ctx, req)
 }
 
 // NotificationServiceHandler is an implementation of the notify.NotificationService service.
 type NotificationServiceHandler interface {
 	// CreateNotification creates a new notification.
-	CreateNotification(context.Context, *connect_go.Request[notify.CreateNotificationRequest]) (*connect_go.Response[notify.CreateNotificationResponse], error)
+	CreateNotification(context.Context, *connect.Request[notify.CreateNotificationRequest]) (*connect.Response[notify.CreateNotificationResponse], error)
 	// GetNotifications gets a list of all notifications for a specific user.
-	GetNotifications(context.Context, *connect_go.Request[notify.GetNotificationsRequest]) (*connect_go.Response[notify.GetNotificationsResponse], error)
+	GetNotifications(context.Context, *connect.Request[notify.GetNotificationsRequest]) (*connect.Response[notify.GetNotificationsResponse], error)
 }
 
 // NewNotificationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -101,28 +101,36 @@ type NotificationServiceHandler interface {
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewNotificationServiceHandler(svc NotificationServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	mux := http.NewServeMux()
-	mux.Handle(NotificationServiceCreateNotificationProcedure, connect_go.NewUnaryHandler(
+func NewNotificationServiceHandler(svc NotificationServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	notificationServiceCreateNotificationHandler := connect.NewUnaryHandler(
 		NotificationServiceCreateNotificationProcedure,
 		svc.CreateNotification,
 		opts...,
-	))
-	mux.Handle(NotificationServiceGetNotificationsProcedure, connect_go.NewUnaryHandler(
+	)
+	notificationServiceGetNotificationsHandler := connect.NewUnaryHandler(
 		NotificationServiceGetNotificationsProcedure,
 		svc.GetNotifications,
 		opts...,
-	))
-	return "/notify.NotificationService/", mux
+	)
+	return "/notify.NotificationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case NotificationServiceCreateNotificationProcedure:
+			notificationServiceCreateNotificationHandler.ServeHTTP(w, r)
+		case NotificationServiceGetNotificationsProcedure:
+			notificationServiceGetNotificationsHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // UnimplementedNotificationServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedNotificationServiceHandler struct{}
 
-func (UnimplementedNotificationServiceHandler) CreateNotification(context.Context, *connect_go.Request[notify.CreateNotificationRequest]) (*connect_go.Response[notify.CreateNotificationResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("notify.NotificationService.CreateNotification is not implemented"))
+func (UnimplementedNotificationServiceHandler) CreateNotification(context.Context, *connect.Request[notify.CreateNotificationRequest]) (*connect.Response[notify.CreateNotificationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("notify.NotificationService.CreateNotification is not implemented"))
 }
 
-func (UnimplementedNotificationServiceHandler) GetNotifications(context.Context, *connect_go.Request[notify.GetNotificationsRequest]) (*connect_go.Response[notify.GetNotificationsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("notify.NotificationService.GetNotifications is not implemented"))
+func (UnimplementedNotificationServiceHandler) GetNotifications(context.Context, *connect.Request[notify.GetNotificationsRequest]) (*connect.Response[notify.GetNotificationsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("notify.NotificationService.GetNotifications is not implemented"))
 }

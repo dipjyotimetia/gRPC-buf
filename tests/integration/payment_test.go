@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bufbuild/connect-go"
-	otelconnect "github.com/bufbuild/connect-opentelemetry-go"
+	"connectrpc.com/connect"
+	"connectrpc.com/otelconnect"
 	paymentconnect "github.com/grpc-buf/internal/gen/payment/paymentv1connect"
 
 	payment "github.com/grpc-buf/internal/gen/payment"

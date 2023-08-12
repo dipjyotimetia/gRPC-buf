@@ -1,6 +1,6 @@
 # Project Name: gRPC-buf
 
-gRPC-buf is a Golang-based project that utilizes the `github.com/bufbuild/connect-go` library to develop gRPC and
+gRPC-buf is a Golang-based project that utilizes the `connectrpc.com/connect` library to develop gRPC and
 REST APIs. It is designed to be deployed on Google Cloud Run and uses the `github.com/cloudevents/sdk-go` library for
 publishing CloudEvents to Google Cloud Pub/Sub and Apache Kafka topics.
 
@@ -14,7 +14,7 @@ publishing CloudEvents to Google Cloud Pub/Sub and Apache Kafka topics.
 
 ## Features
 
-- gRPC and REST API development using `github.com/bufbuild/connect-go` library.
+- gRPC and REST API development using `connectrpc.com/connect` library.
 - Deployment on Google Cloud Run.
 - CloudEvents integration with Google Cloud Pub/Sub and Apache Kafka topics using `github.com/cloudevents/sdk-go`.
 

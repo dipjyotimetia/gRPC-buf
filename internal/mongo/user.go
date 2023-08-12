@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/golang-jwt/jwt/v4"
 	userv1 "github.com/grpc-buf/internal/gen/registration"
 	log "github.com/sirupsen/logrus"

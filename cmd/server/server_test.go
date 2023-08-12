@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	payment "github.com/grpc-buf/internal/gen/payment"
 	paymentconnect "github.com/grpc-buf/internal/gen/payment/paymentv1connect"
 	"github.com/grpc-buf/internal/mongo"

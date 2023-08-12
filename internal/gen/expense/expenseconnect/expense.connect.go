@@ -5,9 +5,9 @@
 package expenseconnect
 
 import (
+	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	connect_go "github.com/bufbuild/connect-go"
 	expense "github.com/grpc-buf/internal/gen/expense"
 	http "net/http"
 	strings "strings"
@@ -18,7 +18,7 @@ import (
 // generated with a version of connect newer than the one compiled into your binary. You can fix the
 // problem by either regenerating this code with an older version of connect or updating the connect
 // version compiled into your binary.
-const _ = connect_go.IsAtLeastVersion0_1_0
+const _ = connect.IsAtLeastVersion0_1_0
 
 const (
 	// ExpenseServiceName is the fully-qualified name of the ExpenseService service.
@@ -44,9 +44,9 @@ const (
 // ExpenseServiceClient is a client for the expense.ExpenseService service.
 type ExpenseServiceClient interface {
 	// AddExpense adds a new expense.
-	AddExpense(context.Context, *connect_go.Request[expense.AddExpenseRequest]) (*connect_go.Response[expense.AddExpenseResponse], error)
+	AddExpense(context.Context, *connect.Request[expense.AddExpenseRequest]) (*connect.Response[expense.AddExpenseResponse], error)
 	// GetExpenses gets a list of all expenses.
-	GetExpenses(context.Context, *connect_go.Request[expense.GetExpensesRequest]) (*connect_go.Response[expense.GetExpensesResponse], error)
+	GetExpenses(context.Context, *connect.Request[expense.GetExpensesRequest]) (*connect.Response[expense.GetExpensesResponse], error)
 }
 
 // NewExpenseServiceClient constructs a client for the expense.ExpenseService service. By default,
@@ -56,15 +56,15 @@ type ExpenseServiceClient interface {
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewExpenseServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) ExpenseServiceClient {
+func NewExpenseServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) ExpenseServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &expenseServiceClient{
-		addExpense: connect_go.NewClient[expense.AddExpenseRequest, expense.AddExpenseResponse](
+		addExpense: connect.NewClient[expense.AddExpenseRequest, expense.AddExpenseResponse](
 			httpClient,
 			baseURL+ExpenseServiceAddExpenseProcedure,
 			opts...,
 		),
-		getExpenses: connect_go.NewClient[expense.GetExpensesRequest, expense.GetExpensesResponse](
+		getExpenses: connect.NewClient[expense.GetExpensesRequest, expense.GetExpensesResponse](
 			httpClient,
 			baseURL+ExpenseServiceGetExpensesProcedure,
 			opts...,
@@ -74,26 +74,26 @@ func NewExpenseServiceClient(httpClient connect_go.HTTPClient, baseURL string, o
 
 // expenseServiceClient implements ExpenseServiceClient.
 type expenseServiceClient struct {
-	addExpense  *connect_go.Client[expense.AddExpenseRequest, expense.AddExpenseResponse]
-	getExpenses *connect_go.Client[expense.GetExpensesRequest, expense.GetExpensesResponse]
+	addExpense  *connect.Client[expense.AddExpenseRequest, expense.AddExpenseResponse]
+	getExpenses *connect.Client[expense.GetExpensesRequest, expense.GetExpensesResponse]
 }
 
 // AddExpense calls expense.ExpenseService.AddExpense.
-func (c *expenseServiceClient) AddExpense(ctx context.Context, req *connect_go.Request[expense.AddExpenseRequest]) (*connect_go.Response[expense.AddExpenseResponse], error) {
+func (c *expenseServiceClient) AddExpense(ctx context.Context, req *connect.Request[expense.AddExpenseRequest]) (*connect.Response[expense.AddExpenseResponse], error) {
 	return c.addExpense.CallUnary(ctx, req)
 }
 
 // GetExpenses calls expense.ExpenseService.GetExpenses.
-func (c *expenseServiceClient) GetExpenses(ctx context.Context, req *connect_go.Request[expense.GetExpensesRequest]) (*connect_go.Response[expense.GetExpensesResponse], error) {
+func (c *expenseServiceClient) GetExpenses(ctx context.Context, req *connect.Request[expense.GetExpensesRequest]) (*connect.Response[expense.GetExpensesResponse], error) {
 	return c.getExpenses.CallUnary(ctx, req)
 }
 
 // ExpenseServiceHandler is an implementation of the expense.ExpenseService service.
 type ExpenseServiceHandler interface {
 	// AddExpense adds a new expense.
-	AddExpense(context.Context, *connect_go.Request[expense.AddExpenseRequest]) (*connect_go.Response[expense.AddExpenseResponse], error)
+	AddExpense(context.Context, *connect.Request[expense.AddExpenseRequest]) (*connect.Response[expense.AddExpenseResponse], error)
 	// GetExpenses gets a list of all expenses.
-	GetExpenses(context.Context, *connect_go.Request[expense.GetExpensesRequest]) (*connect_go.Response[expense.GetExpensesResponse], error)
+	GetExpenses(context.Context, *connect.Request[expense.GetExpensesRequest]) (*connect.Response[expense.GetExpensesResponse], error)
 }
 
 // NewExpenseServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -101,28 +101,36 @@ type ExpenseServiceHandler interface {
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewExpenseServiceHandler(svc ExpenseServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	mux := http.NewServeMux()
-	mux.Handle(ExpenseServiceAddExpenseProcedure, connect_go.NewUnaryHandler(
+func NewExpenseServiceHandler(svc ExpenseServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	expenseServiceAddExpenseHandler := connect.NewUnaryHandler(
 		ExpenseServiceAddExpenseProcedure,
 		svc.AddExpense,
 		opts...,
-	))
-	mux.Handle(ExpenseServiceGetExpensesProcedure, connect_go.NewUnaryHandler(
+	)
+	expenseServiceGetExpensesHandler := connect.NewUnaryHandler(
 		ExpenseServiceGetExpensesProcedure,
 		svc.GetExpenses,
 		opts...,
-	))
-	return "/expense.ExpenseService/", mux
+	)
+	return "/expense.ExpenseService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case ExpenseServiceAddExpenseProcedure:
+			expenseServiceAddExpenseHandler.ServeHTTP(w, r)
+		case ExpenseServiceGetExpensesProcedure:
+			expenseServiceGetExpensesHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // UnimplementedExpenseServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedExpenseServiceHandler struct{}
 
-func (UnimplementedExpenseServiceHandler) AddExpense(context.Context, *connect_go.Request[expense.AddExpenseRequest]) (*connect_go.Response[expense.AddExpenseResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("expense.ExpenseService.AddExpense is not implemented"))
+func (UnimplementedExpenseServiceHandler) AddExpense(context.Context, *connect.Request[expense.AddExpenseRequest]) (*connect.Response[expense.AddExpenseResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("expense.ExpenseService.AddExpense is not implemented"))
 }
 
-func (UnimplementedExpenseServiceHandler) GetExpenses(context.Context, *connect_go.Request[expense.GetExpensesRequest]) (*connect_go.Response[expense.GetExpensesResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("expense.ExpenseService.GetExpenses is not implemented"))
+func (UnimplementedExpenseServiceHandler) GetExpenses(context.Context, *connect.Request[expense.GetExpensesRequest]) (*connect.Response[expense.GetExpensesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("expense.ExpenseService.GetExpenses is not implemented"))
 }

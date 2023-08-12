@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	payment "github.com/grpc-buf/internal/gen/payment"
-	"github.com/grpc-buf/internal/gen/registration"
+	userv1 "github.com/grpc-buf/internal/gen/registration"
 	"github.com/grpc-buf/internal/mongo"
 )
 

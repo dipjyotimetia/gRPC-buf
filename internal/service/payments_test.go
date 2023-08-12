@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	payment "github.com/grpc-buf/internal/gen/payment"
 	"github.com/grpc-buf/internal/service/mocks"
 	"github.com/stretchr/testify/assert"

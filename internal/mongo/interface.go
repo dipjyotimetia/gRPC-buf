@@ -2,13 +2,13 @@ package mongo
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"time"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	payment "github.com/grpc-buf/internal/gen/payment"
 	userv1 "github.com/grpc-buf/internal/gen/registration"
-	log "github.com/sirupsen/logrus"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -40,7 +40,7 @@ func NewDatabaseConnection() DataStore {
 	var client *mongo.Client
 
 	if env == "dev" {
-		log.Info("Connecting to MongoDB local")
+		slog.Info("Connecting to MongoDB local")
 		client, err = mongo.NewClient(options.Client().
 			SetAuth(options.Credential{
 				Username: "admin",
@@ -51,12 +51,12 @@ func NewDatabaseConnection() DataStore {
 			SetMinPoolSize(minPoolSize).
 			SetMaxPoolSize(maxPoolSize))
 	} else {
-		log.Info("Connecting to MongoDB Atlas")
+		slog.Info("Connecting to MongoDB Atlas")
 		client, err = mongo.NewClient(options.Client().ApplyURI(os.Getenv("MONGO_URL")))
 	}
 
 	if err != nil {
-		log.Fatalf("MongoDB client creation failed: %v", err)
+		slog.Error("MongoDB client creation failed: %v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -64,7 +64,7 @@ func NewDatabaseConnection() DataStore {
 
 	err = client.Connect(ctx)
 	if err != nil {
-		log.Fatalf("MongoDB connection failed: %v", err)
+		slog.Error("MongoDB connection failed: %v", err)
 	}
 
 	return &Store{
