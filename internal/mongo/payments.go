@@ -3,10 +3,10 @@ package mongo
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"connectrpc.com/connect"
 	payment "github.com/grpc-buf/internal/gen/payment"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -48,8 +48,8 @@ func (db *Store) MakePayment(ctx context.Context, req *connect.Request[payment.P
 		return nil, status.Errorf(codes.Internal, "Cannot convert to OID")
 	}
 
-	log.Println("Received payment with name:", name, "and amount:", amount)
-	log.Println(req.Header().Get("Some-Header"))
+	slog.Info("Received payment with name:", name, "and amount:", amount)
+	slog.Info(req.Header().Get("Some-Header"))
 	response := connect.NewResponse(&payment.PaymentResponse{
 		Response: &payment.PaymentResponse_Paid{Paid: true},
 	})

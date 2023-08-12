@@ -9,9 +9,10 @@ services:
     depends_on:
       - mongo
     ports:
-      - "8080:8080"
+      - "8083:8083"
     environment:
       - ENVIRONMENT=dev
+      - PORT=8083
     restart: on-failure
 
   mongo:

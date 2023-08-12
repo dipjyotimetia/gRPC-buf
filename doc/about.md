@@ -27,8 +27,9 @@ Install gRPC Buf by downloading the binary for your operating system or using a 
 
 Step 2: Project Initialization
 Initialize a new project with gRPC Buf by running the command:
+
 ```
-$ buf init
+buf init
 ```
 
 Step 3: Define Protobuf Files
@@ -36,21 +37,24 @@ Create your protobuf files (.proto) in the project directory. Define your API me
 
 Step 4: Linting and Validation
 Ensure the consistency and correctness of your protobuf files by running the linting command:
+
 ```
-$ buf lint
+buf lint
 ```
+
 Fix any linting errors or warnings to maintain a clean and well-defined API.
 
 Step 5: Code Generation
 Generate Go code for your gRPC API using the code generation command:
+
 ```
-$ buf generate
+buf generate
 ```
+
 This will create the necessary stubs, clients, and server code based on your protobuf files.
 
 Step 6: Building and Using the Generated Code
 Import the generated code in your Go project and start implementing your gRPC server and client logic. Utilize the generated code's strongly-typed APIs to handle requests and responses efficiently.
-
 
 gRPC Buf simplifies gRPC API development in Go by providing essential features for linting, code generation, and compatibility checking. By leveraging gRPC Buf, developers can ensure consistent API design, reduce boilerplate code, and streamline the development workflow. Whether you are building microservices, distributed systems, or client-server applications, gRPC Buf empowers you to create efficient and maintainable APIs in Go. Start using g
 

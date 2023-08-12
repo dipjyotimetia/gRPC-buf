@@ -3,12 +3,12 @@ package mongo
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/golang-jwt/jwt/v4"
 	userv1 "github.com/grpc-buf/internal/gen/registration"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
@@ -75,7 +75,7 @@ func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.Logi
 func (db *Store) RegisterUser(ctx context.Context, req *connect.Request[userv1.RegisterRequest]) (*connect.Response[userv1.RegisterResponse], error) {
 	hashedPassword, err := HashPassword(req.Msg.GetPassword())
 	if err != nil {
-		log.Fatalf("Error hashing password: %v", err)
+		slog.Error("Error hashing password: %v", err)
 	}
 
 	data := User{

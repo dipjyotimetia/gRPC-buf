@@ -25,7 +25,8 @@ var (
 
 func Run() error {
 	mux := setupHandler()
-	slog.Info("Starting gRPC server")
+	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	log.Info("Starting gRPC server")
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
@@ -48,7 +49,7 @@ func Run() error {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("HTTP listen and serve: %v", err)
+			log.Error("HTTP listen and serve: %v", err)
 		}
 	}()
 
@@ -58,7 +59,7 @@ func Run() error {
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		slog.Error("HTTP shutdown: %v", err)
+		log.Error("HTTP shutdown: %v", err)
 	}
 	return nil
 }

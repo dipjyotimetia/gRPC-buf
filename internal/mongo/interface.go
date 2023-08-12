@@ -39,9 +39,12 @@ func NewDatabaseConnection() DataStore {
 	var err error
 	var client *mongo.Client
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	if env == "dev" {
 		slog.Info("Connecting to MongoDB local")
-		client, err = mongo.NewClient(options.Client().
+		client, err = mongo.Connect(ctx, options.Client().
 			SetAuth(options.Credential{
 				Username: "admin",
 				Password: "admin",
@@ -52,19 +55,11 @@ func NewDatabaseConnection() DataStore {
 			SetMaxPoolSize(maxPoolSize))
 	} else {
 		slog.Info("Connecting to MongoDB Atlas")
-		client, err = mongo.NewClient(options.Client().ApplyURI(os.Getenv("MONGO_URL")))
+		client, err = mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_URL")))
 	}
 
 	if err != nil {
 		slog.Error("MongoDB client creation failed: %v", err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	err = client.Connect(ctx)
-	if err != nil {
-		slog.Error("MongoDB connection failed: %v", err)
 	}
 
 	return &Store{

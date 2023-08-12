@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
+
 	"net/http"
 	"testing"
 	"time"
@@ -36,7 +37,7 @@ func TestPayment(t *testing.T) {
 	})
 	res, err := client.MakePayment(context.Background(), req)
 	if err != nil {
-		log.Fatalln(err)
+		slog.Error(err.Error())
 	}
 	fmt.Println(res.Msg)
 	fmt.Println(res.Header().Get("Some-Other-Header"))
