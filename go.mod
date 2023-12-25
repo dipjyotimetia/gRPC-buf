@@ -3,7 +3,7 @@ module github.com/grpc-buf
 go 1.21
 
 require (
-	connectrpc.com/connect v1.13.0
+	connectrpc.com/connect v1.14.0
 	connectrpc.com/grpchealth v1.3.0
 	connectrpc.com/grpcreflect v1.2.0
 	connectrpc.com/otelconnect v0.6.0
@@ -14,7 +14,7 @@ require (
 	golang.org/x/crypto v0.17.0
 	golang.org/x/net v0.19.0
 	google.golang.org/grpc v1.60.1
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.32.0
 )
 
 require (
