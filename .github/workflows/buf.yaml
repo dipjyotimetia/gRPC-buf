@@ -13,7 +13,7 @@ jobs:
           github_token: ${{ github.token }}
       - name: Get changed files in the proto folder
         id: changed-proto
-        uses: tj-actions/changed-files@v35
+        uses: tj-actions/changed-files@v41
         with:
           files: proto/**
 #      - uses: bufbuild/buf-lint-action@v1
