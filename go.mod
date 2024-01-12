@@ -6,7 +6,7 @@ require (
 	connectrpc.com/connect v1.14.0
 	connectrpc.com/grpchealth v1.3.0
 	connectrpc.com/grpcreflect v1.2.0
-	connectrpc.com/otelconnect v0.6.0
+	connectrpc.com/otelconnect v0.7.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/rs/cors v1.10.1
 	github.com/stretchr/testify v1.8.4
