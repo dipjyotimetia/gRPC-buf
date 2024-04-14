@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"connectrpc.com/otelconnect"
 	paymentconnect "github.com/grpc-buf/internal/gen/payment/paymentv1connect"
 
 	payment "github.com/grpc-buf/internal/gen/payment"
@@ -21,7 +20,6 @@ func TestPayment(t *testing.T) {
 	client := paymentconnect.NewPaymentClient(
 		http.DefaultClient,
 		"http://localhost:8080",
-		connect.WithInterceptors(otelconnect.NewInterceptor()),
 		connect.WithGRPC(),
 	)
 	req := connect.NewRequest(&payment.PaymentRequest{

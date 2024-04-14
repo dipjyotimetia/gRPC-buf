@@ -6,7 +6,6 @@ import (
 	"connectrpc.com/connect"
 	"connectrpc.com/grpchealth"
 	"connectrpc.com/grpcreflect"
-	"connectrpc.com/otelconnect"
 	"github.com/grpc-buf/internal/gen/payment/paymentv1connect"
 	"github.com/grpc-buf/internal/gen/registration/userv1connect"
 )
@@ -18,12 +17,10 @@ func setupHandler() *http.ServeMux {
 	mux.Handle(paymentv1connect.NewPaymentHandler(
 		paymentService,
 		compress1KB,
-		connect.WithInterceptors(otelconnect.NewInterceptor()),
 	))
 	mux.Handle(userv1connect.NewUserServiceHandler(
 		userService,
 		compress1KB,
-		connect.WithInterceptors(otelconnect.NewInterceptor()),
 	))
 	mux.Handle(grpchealth.NewHandler(
 		grpchealth.NewStaticChecker(
