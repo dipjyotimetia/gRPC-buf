@@ -1,0 +1,24 @@
+version: v2
+modules:
+  - path: proto
+    name: buf.build/dipgrpc/grpc-buf
+  - path: proto/expense
+  - path: proto/notify
+  - path: proto/payment
+  - path: proto/product
+  - path: proto/registration
+deps:
+  - buf.build/googleapis/googleapis
+lint:
+  use:
+    - DEFAULT
+  except:
+    - FIELD_NOT_REQUIRED
+    - PACKAGE_NO_IMPORT_CYCLE
+  disallow_comment_ignores: true
+breaking:
+  use:
+    - FILE
+  except:
+    - EXTENSION_NO_DELETE
+    - FIELD_SAME_DEFAULT
