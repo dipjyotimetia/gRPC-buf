@@ -3,7 +3,7 @@ module github.com/grpc-buf
 go 1.22
 
 require (
-	connectrpc.com/connect v1.16.2
+	connectrpc.com/connect v1.17.0
 	connectrpc.com/grpchealth v1.3.0
 	connectrpc.com/grpcreflect v1.2.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
