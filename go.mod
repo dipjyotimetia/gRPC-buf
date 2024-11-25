@@ -9,7 +9,7 @@ require (
 	connectrpc.com/grpcreflect v1.2.0
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/rs/cors v1.11.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go.mongodb.org/mongo-driver v1.17.1
 	golang.org/x/crypto v0.29.0
 	golang.org/x/net v0.31.0
