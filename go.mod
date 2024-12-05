@@ -1,6 +1,7 @@
 module github.com/grpc-buf
 
 go 1.22
+
 toolchain go1.22.9
 
 require (
@@ -12,7 +13,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	go.mongodb.org/mongo-driver v1.17.1
 	golang.org/x/crypto v0.30.0
-	golang.org/x/net v0.31.0
+	golang.org/x/net v0.32.0
 	google.golang.org/grpc v1.68.1
 	google.golang.org/protobuf v1.35.2
 )
