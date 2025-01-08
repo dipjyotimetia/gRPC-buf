@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.9
 
 require (
-	connectrpc.com/connect v1.17.0
+	connectrpc.com/connect v1.18.0
 	connectrpc.com/grpchealth v1.3.0
 	connectrpc.com/grpcreflect v1.2.0
 	github.com/golang-jwt/jwt/v4 v4.5.1
