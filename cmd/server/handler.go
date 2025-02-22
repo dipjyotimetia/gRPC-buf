@@ -10,14 +10,9 @@ import (
 	"connectrpc.com/otelconnect"
 	"github.com/grpc-buf/internal/gen/proto/payment/paymentv1connect"
 	"github.com/grpc-buf/internal/gen/proto/registration/userv1connect"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/trace"
 )
 
 func setupHandler() *http.ServeMux {
-	setupOtel()
-
 	mux := http.NewServeMux()
 
 	otelInterceptor, err := otelconnect.NewInterceptor()
@@ -61,9 +56,4 @@ func setupHandler() *http.ServeMux {
 	))
 
 	return mux
-}
-
-func setupOtel() {
-	otel.SetTracerProvider(trace.NewTracerProvider())
-	otel.SetTextMapPropagator(propagation.TraceContext{})
 }

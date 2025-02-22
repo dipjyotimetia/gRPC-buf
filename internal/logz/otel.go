@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	otelEndpoint    = "jaeger:4317"
+	otelEndpoint    = "otel-collector:4317"
 	initialInterval = 2 * time.Second
 	maxInterval     = 5 * time.Second
 	maxElapsedTime  = 10 * time.Second
@@ -62,15 +62,9 @@ func StartTracer() (func(), error) {
 	}
 
 	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(expo,
-			sdktrace.WithBatchTimeout(5*time.Second),
-			sdktrace.WithMaxExportBatchSize(512),
-			sdktrace.WithMaxQueueSize(2048),
-		),
+		sdktrace.WithBatcher(expo),
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithResource(newResource()),
-		sdktrace.WithSampler(sdktrace.ParentBased(
-			sdktrace.TraceIDRatioBased(0.1), // Sample 10% of traces
-		)),
 	)
 
 	otel.SetTracerProvider(tp)
