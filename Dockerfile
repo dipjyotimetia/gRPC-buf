@@ -1,4 +1,4 @@
-FROM golang:1.22.0 as builder
+FROM golang:1.23.0 as builder
 
 ENV CGO_ENABLED=0
 ENV GO111MODULE=on
@@ -25,6 +25,8 @@ RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/server /app/server
+
+EXPOSE 8080
 
 # Run the binary program produced by `go install`
 ENTRYPOINT ["/app/server"]

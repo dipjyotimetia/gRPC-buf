@@ -3,11 +3,11 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: github.com/grpc-buf/internal/gen
+      value: github.com/grpc-buf/internal/gen/proto
 plugins:
-  - local: protoc-gen-go
-    out: internal/gen
+  - remote: buf.build/protocolbuffers/go
+    out: internal/gen/proto
     opt: paths=source_relative
-  - local: protoc-gen-connect-go
-    out: internal/gen
+  - remote: buf.build/connectrpc/go
+    out: internal/gen/proto
     opt: paths=source_relative

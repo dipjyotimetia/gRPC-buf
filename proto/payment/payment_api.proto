@@ -2,12 +2,6 @@ syntax = "proto3";
 
 package rpc.payment.v1;
 
-option go_package = "payment/paymentpb";
-option csharp_namespace = "Payment";
-option java_multiple_files = true;
-option java_outer_classname = "PaymentProto";
-option java_package = "com.payment";
-
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "google/type/money.proto";
@@ -19,53 +13,57 @@ service Payment {
       post: "/v1/payment/make"
       body: "*"
     };
-  };
+  }
   rpc MarkInvoicePaid(Invoice) returns (Invoice) {
     option (google.api.http) = {
       post: "/v1/invoice/mark"
       body: "*"
     };
-  };
+  }
   rpc PayInvoice(Invoice) returns (Invoice) {
     option (google.api.http) = {
       post: "/v1/invoice/pay"
       body: "*"
     };
-  };
+  }
 }
 
 // Invoice information
 message Invoice {
-  int64 id = 1;                       // Unique identifier for the invoice
-  string name = 2;                    // Invoice name
-  google.type.Money amount = 3;       // Invoice amount
-  bool paid = 4;                      // Indicates if the invoice is paid
+  int64 id = 1; // Unique identifier for the invoice
+  string invoice_name = 2; // Invoice name
+  google.type.Money amount = 3; // Invoice amount
+  bool paid = 4; // Indicates if the invoice is paid
 }
 
 // PaymentRequest contains payment information for processing a payment
 message PaymentRequest {
-  int64 CardNo = 1;                   // Card number
-  CardType card = 2;                  // Card type
-  string name = 3;                    // Card holder's name
-  repeated string address = 4;        // Card holder's address
-  float amount = 5;                   // Total payment amount
+  int64 card_no = 1; // Card number
+  CardType card = 2; // Card type
+  string name = 3; // Card holder's name
+  repeated string address_lines = 4; // Card holder's address
+  float amount = 5; // Total payment amount
   google.protobuf.Timestamp payment_created = 6; // Timestamp for when the payment was created
 }
 
 // PaymentResponse returns the result of a payment request
 message PaymentResponse {
-  oneof response {
-    bool paid = 1;                    // Indicates if the payment was successful
-    string error = 2;                 // Payment error message (if any)
-  }
+  PaymentStatus status = 1;
+  string error = 2; // Payment error message (if any)
+}
+
+enum PaymentStatus {
+  UNKNOWN = 0;
+  PAID = 1;
+  FAILED = 2;
 }
 
 // CardType enum represents different types of payment cards
 enum CardType {
-  DebitCard = 0;   // Debit Card
-  CreditCard = 1;  // Credit Card
-  MasterCard = 2;  // Master Card
-  RewardCard = 3;  // Reward Card
+  DebitCard = 0; // Debit Card
+  CreditCard = 1; // Credit Card
+  MasterCard = 2; // Master Card
+  RewardCard = 3; // Reward Card
 }
 
 message Empty {}

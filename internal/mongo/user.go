@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/golang-jwt/jwt/v4"
-	userv1 "github.com/grpc-buf/internal/gen/registration"
+	"github.com/golang-jwt/jwt/v5"
+	constant "github.com/grpc-buf/internal/const"
+	userv1 "github.com/grpc-buf/internal/gen/proto/registration"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
@@ -42,6 +43,8 @@ func HashPassword(password string) (string, error) {
 }
 
 func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.LoginRequest]) (*connect.Response[userv1.LoginResponse], error) {
+	ctx, span := constant.Tracer.Start(ctx, "LoginUser")
+	defer span.End()
 	var result User
 	email := req.Msg.GetEmail()
 	filter := bson.D{{Key: "email", Value: email}}
@@ -73,8 +76,12 @@ func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.Logi
 }
 
 func (db *Store) RegisterUser(ctx context.Context, req *connect.Request[userv1.RegisterRequest]) (*connect.Response[userv1.RegisterResponse], error) {
+	ctx, span := constant.Tracer.Start(ctx, "RegisterUser")
+	defer span.End()
+
 	hashedPassword, err := HashPassword(req.Msg.GetPassword())
 	if err != nil {
+		span.RecordError(err)
 		slog.Error("Error hashing password: %v", err)
 	}
 
@@ -90,11 +97,15 @@ func (db *Store) RegisterUser(ctx context.Context, req *connect.Request[userv1.R
 
 	res, err := db.InsertOne(ctx, data)
 	if err != nil {
+		span.RecordError(err)
+		slog.Error("Error inserting user: %v", err)
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("Internal error: %v", err))
 	}
 
 	id, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
+		span.RecordError(err)
+		slog.Error("Error converting to OID: %v", err)
 		return nil, status.Errorf(codes.Internal, "Cannot convert to OID")
 	}
 

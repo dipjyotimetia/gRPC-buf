@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
-	payment "github.com/grpc-buf/internal/gen/payment"
-	userv1 "github.com/grpc-buf/internal/gen/registration"
+	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
+	userv1 "github.com/grpc-buf/internal/gen/proto/registration"
 	"github.com/grpc-buf/internal/mongo"
 )
 
@@ -18,9 +18,9 @@ type userService struct {
 }
 
 type PaymentService interface {
-	MarkInvoicePaid(ctx context.Context, c *connect.Request[payment.Invoice]) (*connect.Response[payment.Invoice], error)
-	PayInvoice(ctx context.Context, c *connect.Request[payment.Invoice]) (*connect.Response[payment.Invoice], error)
-	MakePayment(ctx context.Context, req *connect.Request[payment.PaymentRequest]) (*connect.Response[payment.PaymentResponse], error)
+	MarkInvoicePaid(ctx context.Context, c *connect.Request[paymentv1.Invoice]) (*connect.Response[paymentv1.Invoice], error)
+	PayInvoice(ctx context.Context, c *connect.Request[paymentv1.Invoice]) (*connect.Response[paymentv1.Invoice], error)
+	MakePayment(ctx context.Context, req *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error)
 }
 
 func NewPaymentService(data mongo.DataStore) PaymentService {
@@ -48,16 +48,16 @@ func (u userService) RegisterUser(ctx context.Context, req *connect.Request[user
 	return u.userDatabase.RegisterUser(ctx, req)
 }
 
-func (p paymentService) MarkInvoicePaid(ctx context.Context, c *connect.Request[payment.Invoice]) (*connect.Response[payment.Invoice], error) {
+func (p paymentService) MarkInvoicePaid(ctx context.Context, c *connect.Request[paymentv1.Invoice]) (*connect.Response[paymentv1.Invoice], error) {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (p paymentService) PayInvoice(ctx context.Context, c *connect.Request[payment.Invoice]) (*connect.Response[payment.Invoice], error) {
+func (p paymentService) PayInvoice(ctx context.Context, c *connect.Request[paymentv1.Invoice]) (*connect.Response[paymentv1.Invoice], error) {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (p paymentService) MakePayment(ctx context.Context, req *connect.Request[payment.PaymentRequest]) (*connect.Response[payment.PaymentResponse], error) {
+func (p paymentService) MakePayment(ctx context.Context, req *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error) {
 	return p.paymentDatabase.MakePayment(ctx, req)
 }

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	payment "github.com/grpc-buf/internal/gen/payment"
-	userv1 "github.com/grpc-buf/internal/gen/registration"
+	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
+	userv1 "github.com/grpc-buf/internal/gen/proto/registration"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -24,7 +24,7 @@ const (
 )
 
 type DataStore interface {
-	MakePayment(ctx context.Context, req *connect.Request[payment.PaymentRequest]) (*connect.Response[payment.PaymentResponse], error)
+	MakePayment(ctx context.Context, req *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error)
 	LoginUser(ctx context.Context, req *connect.Request[userv1.LoginRequest]) (*connect.Response[userv1.LoginResponse], error)
 	RegisterUser(ctx context.Context, req *connect.Request[userv1.RegisterRequest]) (*connect.Response[userv1.RegisterResponse], error)
 }
@@ -48,7 +48,7 @@ func NewDatabaseConnection() DataStore {
 			SetAuth(options.Credential{
 				Username: "admin",
 				Password: "admin",
-			}).ApplyURI("mongodb://localhost:27017").
+			}).ApplyURI("mongodb://mongo:27017").
 			SetConnectTimeout(connectTimeout).
 			SetMaxConnIdleTime(maxConnIdleTime).
 			SetMinPoolSize(minPoolSize).

@@ -1,35 +1,94 @@
-# Project Name: gRPC-buf
+# gRPC-buf
 
-gRPC-buf is a Golang-based project that utilizes the `connectrpc.com/connect` library to develop gRPC and
-REST APIs. It is designed to be deployed on Google Cloud Run and uses the `github.com/cloudevents/sdk-go` library for
-publishing CloudEvents to Google Cloud Pub/Sub and Apache Kafka topics.
+A modern Golang service template featuring gRPC/REST APIs using Connect, with deployment support for Google Cloud Run and event streaming capabilities.
 
-## Table of Contents
+[![Go Version](https://img.shields.io/github/go-mod/go-version/dipjyotimetia/gRPC-buf)](go.mod)
+[![License](https://img.shields.io/github/license/dipjyotimetia/gRPC-buf)](LICENSE)
 
-- [Project Name: gRPC-buf](#project-name-grpc-buf)
-  - [Table of Contents](#table-of-contents)
-  - [Features](#features)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
+## Overview
+
+gRPC-buf provides a production-ready template for building microservices with:
+
+- 🚀 Dual protocol support (gRPC and REST) using [connectrpc.com/connect](https://connectrpc.com)
+- 🌩️ Cloud-native deployment on Google Cloud Run
+- 📨 Event streaming with CloudEvents to Pub/Sub and Kafka
+- 🛠️ Modern development workflow with Buf for Protocol Buffers
 
 ## Features
 
-- gRPC and REST API development using `connectrpc.com/connect` library.
-- Deployment on Google Cloud Run.
-- CloudEvents integration with Google Cloud Pub/Sub and Apache Kafka topics using `github.com/cloudevents/sdk-go`.
+- **API Development**
+  - gRPC and REST endpoints using Connect
+  - Automatic OpenAPI documentation
+  - Protocol Buffer validation and linting
+  
+- **Cloud Integration**
+  - Google Cloud Run deployment
+  - Pub/Sub integration
+  - Kafka support
+  - OpenTelemetry observability
+
+- **Developer Experience**
+  - Hot reload during development
+  - Integrated testing framework
+  - Makefile automation
+  - Docker containerization
 
 ## Prerequisites
 
-- [Go](https://golang.org/doc/install) (1.17 or later)
+- Go 1.23 or later
 - [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
 - [Docker](https://docs.docker.com/get-docker/)
-- [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+- [Buf CLI](https://docs.buf.build/installation)
 
-## Installation
+## Quick Start
 
 1. Clone the repository:
+```bash
+git clone https://github.com/dipjyotimetia/gRPC-buf.git
+cd gRPC-buf
+```
+
+2. Install dependencies:
+```bash
+make setup
+```
+
+3. Generate protobuf code:
+```bash
+make generate
+```
+
+4. Run the service:
+```bash
+make run
+```
+
+## Development
 
 ```bash
-$ git clone https://github.com/dipjoytimetia/gRPC-buf.git
-$ cd gRPC-buf
+# Run tests
+make test
+
+# Lint code
+make lint
+
+# Build binary
+make build
+
+# Clean up
+make clean
 ```
+
+## Documentation
+
+- API Documentation
+- Architecture Overview
+- Deployment Guide
+
+## Contributing
+
+Contributions are welcome! Please read our Contributing Guide for details on our code of conduct and the process for submitting pull requests.
+
+## License
+
+This project is licensed under the MIT License.

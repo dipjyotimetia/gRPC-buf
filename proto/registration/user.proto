@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package rpc.user.v1;
 
-option go_package = "users/userpb";
-
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 
@@ -28,7 +26,7 @@ message LoginRequest {
 }
 
 message LoginResponse {
-  string access_token = 5;
+  string access_token = 1;
 }
 
 service UserService {

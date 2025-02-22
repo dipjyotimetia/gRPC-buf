@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
-	payment "github.com/grpc-buf/internal/gen/payment"
-	userv1 "github.com/grpc-buf/internal/gen/registration"
+	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
+	userv1 "github.com/grpc-buf/internal/gen/proto/registration"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -23,7 +23,7 @@ func (m *MockDataStore) RegisterUser(ctx context.Context, req *connect.Request[u
 	panic("implement me")
 }
 
-func (m *MockDataStore) MakePayment(ctx context.Context, req *connect.Request[payment.PaymentRequest]) (*connect.Response[payment.PaymentResponse], error) {
+func (m *MockDataStore) MakePayment(ctx context.Context, req *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error) {
 	args := m.Called(ctx, req)
-	return args.Get(0).(*connect.Response[payment.PaymentResponse]), args.Error(1)
+	return args.Get(0).(*connect.Response[paymentv1.PaymentResponse]), args.Error(1)
 }

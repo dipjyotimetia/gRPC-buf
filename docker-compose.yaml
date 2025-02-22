@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   api:
     build:
@@ -9,11 +7,14 @@ services:
     depends_on:
       - mongo
     ports:
-      - "8083:8083"
+      - "8080:8080"
     environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
       - ENVIRONMENT=dev
-      - PORT=8083
-    restart: on-failure
+      - PORT=8080
+      - MONGO_URL=mongodb://admin:admin@mongo:27017
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   mongo:
     container_name: mongo
@@ -23,3 +24,13 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
+
+  jaeger:
+    image: jaegertracing/jaeger:2.3.0
+    container_name: jaeger
+    depends_on:
+      - api
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"

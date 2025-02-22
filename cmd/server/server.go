@@ -10,9 +10,12 @@ import (
 	"syscall"
 	"time"
 
+	constant "github.com/grpc-buf/internal/const"
+	"github.com/grpc-buf/internal/logz"
 	"github.com/grpc-buf/internal/mongo"
 	"github.com/grpc-buf/internal/service"
 	"github.com/rs/cors"
+	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -27,6 +30,15 @@ func Run() error {
 	mux := setupHandler()
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	log.Info("Starting gRPC server")
+
+	otelShutdown, err := logz.StartTracer()
+	if err != nil {
+		log.Error("error setting up OTel SDK - %e")
+	}
+	defer otelShutdown()
+
+	ctx, span := constant.Tracer.Start(context.Background(), "server_startup")
+	defer span.End()
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
@@ -55,11 +67,13 @@ func Run() error {
 
 	<-signals
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	shutdownCtx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Error("HTTP shutdown: %v", err)
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "server shutdown failed")
+		log.Error("HTTP shutdown failed", "error", err)
 	}
 	return nil
 }
