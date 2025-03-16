@@ -16,3 +16,11 @@ CREATE TABLE IF NOT EXISTS payments (
     amount REAL NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Insert sample users
+INSERT INTO users (email, password, first_name, last_name) VALUES
+('john.doe@example.com', 'hashed_password_1', 'John', 'Doe'),
+('jane.smith@example.com', 'hashed_password_2', 'Jane', 'Smith'),
+('robert.johnson@example.com', 'hashed_password_3', 'Robert', 'Johnson'),
+('sarah.williams@example.com', 'hashed_password_4', 'Sarah', 'Williams'),
+('michael.brown@example.com', 'hashed_password_5', 'Michael', 'Brown');

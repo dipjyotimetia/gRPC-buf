@@ -12,7 +12,7 @@ import (
 	userv1 "github.com/grpc-buf/internal/gen/proto/registration"
 	"github.com/grpc-buf/internal/postgres/migrations"
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/jackc/pgx/v5/stdlib" // postgres driver
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 const ENV = "ENVIRONMENT"
