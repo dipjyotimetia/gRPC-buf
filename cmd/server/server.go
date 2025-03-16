@@ -12,7 +12,7 @@ import (
 
 	constant "github.com/grpc-buf/internal/const"
 	"github.com/grpc-buf/internal/logz"
-	"github.com/grpc-buf/internal/mongo"
+	"github.com/grpc-buf/internal/postgres"
 	"github.com/grpc-buf/internal/service"
 	"github.com/rs/cors"
 	"go.opentelemetry.io/otel/codes"
@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	db             = mongo.NewDatabaseConnection()
+	db             = postgres.NewDatabaseConnection()
 	paymentService = service.NewPaymentService(db)
 	userService    = service.NewUserService(db)
 )

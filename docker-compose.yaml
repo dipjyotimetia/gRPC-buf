@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: api
     depends_on:
-      - mongo
+      - postgres
       - otel-collector
     ports:
       - "8080:8080"
@@ -13,18 +13,37 @@ services:
       - ENVIRONMENT=dev
       - PORT=8080
       - OTEL_SERVICE_NAME=grpc-buf
-      - MONGO_URL=mongodb://admin:admin@mongo:27017
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/grpcbuf?sslmode=disable
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  mongo:
-    container_name: mongo
-    image: mongo:6.0.3
+  postgres:
+    container_name: postgres
+    image: postgres:17.4
     ports:
-      - "27017:27017"
+      - "5432:5432"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: grpcbuf
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:9.1
+    environment:
+      PGADMIN_DEFAULT_EMAIL: grpcbuf@buf.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    profiles:
+      - debug  
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.120.0
@@ -43,3 +62,7 @@ services:
       - "16686:16686"  # Web UI
     environment:
       - COLLECTOR_OTLP_ENABLED=true
+
+volumes:
+  postgres-data:
+  pgadmin-data:

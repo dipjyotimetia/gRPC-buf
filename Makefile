@@ -49,6 +49,19 @@ lintfix: golangci-lint buf ## Automatically fix some lint errors
 upgrade: ## Upgrade dependencies
 	go get -u -t ./... && go mod tidy -v
 
+# Migration commands
+.PHONY: migrate-create migrate-up migrate-down
+
+migrate-create: ## Create a new migration file
+    @read -p "Enter migration name: " name; \
+    migrate create -ext sql -dir internal/postgres/migrations -seq $$name
+
+migrate-up: ## Run migrations up
+    migrate -path internal/postgres/migrations -database "$(DATABASE_URL)" up
+
+migrate-down: ## Roll back migrations
+    migrate -path internal/postgres/migrations -database "$(DATABASE_URL)" down
+
 .PHONY: buf golangci-lint protoc-gen-go protoc-gen-go-grpc
 
 buf:

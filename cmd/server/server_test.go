@@ -11,7 +11,7 @@ import (
 	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
 	"github.com/grpc-buf/internal/gen/proto/payment/paymentv1connect"
 
-	"github.com/grpc-buf/internal/mongo"
+	"github.com/grpc-buf/internal/postgres"
 	"github.com/grpc-buf/internal/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +21,7 @@ import (
 func TestElizaServer(t *testing.T) {
 	t.Parallel()
 	var (
-		db             = mongo.NewDatabaseConnection()
+		db             = postgres.NewDatabaseConnection()
 		paymentService = service.NewPaymentService(db)
 	)
 	mux := http.NewServeMux()
