@@ -6,35 +6,37 @@ import (
 	"connectrpc.com/connect"
 	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
 	userv1 "github.com/grpc-buf/internal/gen/proto/registration"
-	"github.com/grpc-buf/internal/mongo"
+	"github.com/grpc-buf/internal/postgres"
 )
 
-type paymentService struct {
-	paymentDatabase mongo.DataStore
-}
-
-type userService struct {
-	userDatabase mongo.DataStore
-}
-
+// PaymentService interface
 type PaymentService interface {
+	MakePayment(ctx context.Context, c *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error)
 	MarkInvoicePaid(ctx context.Context, c *connect.Request[paymentv1.Invoice]) (*connect.Response[paymentv1.Invoice], error)
 	PayInvoice(ctx context.Context, c *connect.Request[paymentv1.Invoice]) (*connect.Response[paymentv1.Invoice], error)
-	MakePayment(ctx context.Context, req *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error)
 }
 
-func NewPaymentService(data mongo.DataStore) PaymentService {
-	return &paymentService{
-		paymentDatabase: data,
-	}
-}
-
+// UserService interface
 type UserService interface {
 	LoginUser(ctx context.Context, req *connect.Request[userv1.LoginRequest]) (*connect.Response[userv1.LoginResponse], error)
 	RegisterUser(ctx context.Context, req *connect.Request[userv1.RegisterRequest]) (*connect.Response[userv1.RegisterResponse], error)
 }
 
-func NewUserService(data mongo.DataStore) UserService {
+type paymentService struct {
+	paymentDatabase postgres.DataStore
+}
+
+type userService struct {
+	userDatabase postgres.DataStore
+}
+
+func NewPaymentService(data postgres.DataStore) PaymentService {
+	return &paymentService{
+		paymentDatabase: data,
+	}
+}
+
+func NewUserService(data postgres.DataStore) UserService {
 	return &userService{
 		userDatabase: data,
 	}
@@ -58,6 +60,6 @@ func (p paymentService) PayInvoice(ctx context.Context, c *connect.Request[payme
 	panic("implement me")
 }
 
-func (p paymentService) MakePayment(ctx context.Context, req *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error) {
-	return p.paymentDatabase.MakePayment(ctx, req)
+func (p paymentService) MakePayment(ctx context.Context, c *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error) {
+	return p.paymentDatabase.MakePayment(ctx, c)
 }

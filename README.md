@@ -13,6 +13,7 @@ gRPC-buf provides a production-ready template for building microservices with:
 - 🌩️ Cloud-native deployment on Google Cloud Run
 - 📨 Event streaming with CloudEvents to Pub/Sub and Kafka
 - 🛠️ Modern development workflow with Buf for Protocol Buffers
+- 🗄️ PostgreSQL for persistent data storage
 
 ## Features
 
@@ -26,6 +27,7 @@ gRPC-buf provides a production-ready template for building microservices with:
   - Pub/Sub integration
   - Kafka support
   - OpenTelemetry observability
+  - PostgreSQL for data persistence
 
 - **Developer Experience**
   - Hot reload during development

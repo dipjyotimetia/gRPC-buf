@@ -1,23 +1,19 @@
-FROM golang:1.23.0 as builder
+FROM golang:1.24 AS builder
 
 ENV CGO_ENABLED=0
 ENV GO111MODULE=on
 
-# Set the Current Working Directory inside the container
 WORKDIR /app
 
-# We want to populate the module cache based on the go.{mod,sum} files.
 COPY go.* ./
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 
 COPY . .
 
-# Build the Go app
 RUN --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=linux go build -a -o ./server ./cmd
 
-# second stage
 FROM debian:buster-slim
 WORKDIR /app
 RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -28,5 +24,4 @@ COPY --from=builder /app/server /app/server
 
 EXPOSE 8080
 
-# Run the binary program produced by `go install`
 ENTRYPOINT ["/app/server"]
