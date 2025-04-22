@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	connectrpc.com/connect v1.18.1
-	connectrpc.com/grpchealth v1.3.0
+	connectrpc.com/grpchealth v1.4.0
 	connectrpc.com/grpcreflect v1.3.0
 	connectrpc.com/otelconnect v0.7.2
 	github.com/golang-jwt/jwt/v5 v5.2.2
