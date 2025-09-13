@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package rpc.expense.v1;
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "google/type/money.proto";
+import "google/api/annotations.proto";
+
+// Expense resource
+message Expense {
+  string id = 1;                         // Server-generated ID
+  string user_id = 2;                    // Owner of the expense
+  google.type.Money amount = 3;          // Amount and currency
+  string category = 4;                   // Category label
+  string description = 5;                // Optional description
+  google.protobuf.Timestamp create_time = 6;
+  google.protobuf.Timestamp update_time = 7;
+}
+
+message CreateExpenseRequest {
+  Expense expense = 1; // Required: user_id, amount
+}
+
+message GetExpenseRequest {
+  string id = 1; // Required
+}
+
+message ListExpensesRequest {
+  string user_id = 1; // Optional filter by user
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListExpensesResponse {
+  repeated Expense expenses = 1;
+  string next_page_token = 2;
+}
+
+message UpdateExpenseRequest {
+  Expense expense = 1;                   // Must include id
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message DeleteExpenseRequest {
+  string id = 1; // Required
+}
+
+service ExpenseService {
+  rpc CreateExpense(CreateExpenseRequest) returns (Expense) {
+    option (google.api.http) = {
+      post: "/v1/expenses"
+      body: "*"
+    };
+  }
+
+  rpc GetExpense(GetExpenseRequest) returns (Expense) {
+    option (google.api.http) = {
+      get: "/v1/expenses/{id}"
+    };
+  }
+
+  rpc ListExpenses(ListExpensesRequest) returns (ListExpensesResponse) {
+    option (google.api.http) = {
+      get: "/v1/expenses"
+    };
+  }
+
+  rpc UpdateExpense(UpdateExpenseRequest) returns (Expense) {
+    option (google.api.http) = {
+      patch: "/v1/expenses/{expense.id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteExpense(DeleteExpenseRequest) returns (.google.protobuf.Timestamp) {
+    option (google.api.http) = {
+      delete: "/v1/expenses/{id}"
+    };
+  }
+}
+

@@ -62,5 +62,7 @@ jobs:
           service:  ${{ secrets.GCP_APP_NAME }}
           image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_APP_NAME }}:latest
           region: australia-southeast1
-          secrets: MONGO_URL=projects/1042576031837/secrets/mongodb/versions/2
+          # Map Secret Manager secret DATABASE_URL to env var DATABASE_URL in Cloud Run
+          # Update the resource path to your project/secret/version
+          # secrets: DATABASE_URL=projects/PROJECT_NUMBER/secrets/DATABASE_URL/versions/latest
           flags: --use-http2

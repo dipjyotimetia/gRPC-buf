@@ -10,19 +10,19 @@ import "google/type/money.proto";
 service Payment {
   rpc MakePayment(PaymentRequest) returns (PaymentResponse) {
     option (google.api.http) = {
-      post: "/v1/payment/make"
+      post: "/v1/payment:make"
       body: "*"
     };
   }
   rpc MarkInvoicePaid(Invoice) returns (Invoice) {
     option (google.api.http) = {
-      post: "/v1/invoice/mark"
+      post: "/v1/invoice:markPaid"
       body: "*"
     };
   }
   rpc PayInvoice(Invoice) returns (Invoice) {
     option (google.api.http) = {
-      post: "/v1/invoice/pay"
+      post: "/v1/invoice:pay"
       body: "*"
     };
   }
@@ -53,17 +53,18 @@ message PaymentResponse {
 }
 
 enum PaymentStatus {
-  UNKNOWN = 0;
-  PAID = 1;
-  FAILED = 2;
+  PAYMENT_STATUS_UNSPECIFIED = 0;
+  PAYMENT_STATUS_PAID = 1;
+  PAYMENT_STATUS_FAILED = 2;
 }
 
 // CardType enum represents different types of payment cards
 enum CardType {
-  DebitCard = 0; // Debit Card
-  CreditCard = 1; // Credit Card
-  MasterCard = 2; // Master Card
-  RewardCard = 3; // Reward Card
+  CARD_TYPE_UNSPECIFIED = 0; // Unspecified
+  CARD_TYPE_DEBIT = 1;       // Debit Card
+  CARD_TYPE_CREDIT = 2;      // Credit Card
+  CARD_TYPE_MASTERCARD = 3;  // Master Card
+  CARD_TYPE_REWARD = 4;      // Reward Card
 }
 
 message Empty {}

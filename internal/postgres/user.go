@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"os"
 )
 
 // HashPassword takes a plain-text password and returns a hashed password using bcrypt.
@@ -55,16 +56,22 @@ func (db *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.Logi
 	}
 
 	// Generate JWT token
-	expirationTime := time.Now().Add(15 * time.Minute) // Expiration time of the token: 15 minutes
+	expirationTime := time.Now().Add(15 * time.Minute)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Issuer:    "grpc-buff",
-		Subject:   "grpc-buff",
-		Audience:  jwt.ClaimStrings{"grpc-buff"},
+		Issuer:    "grpc-buf",
+		Subject:   "grpc-buf",
+		Audience:  jwt.ClaimStrings{"grpc-buf"},
 		ExpiresAt: &jwt.NumericDate{Time: expirationTime},
 		ID:        email,
 	})
 
-	tokenString, err := token.SignedString([]byte("jwtKey"))
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		slog.Warn("JWT_SECRET is not set; using insecure default for development")
+		secret = "insecure-dev-secret"
+	}
+
+	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
 		span.RecordError(err)
 		slog.Error("Error signing JWT token", "error", err)
@@ -94,7 +101,7 @@ func (db *Store) RegisterUser(ctx context.Context, req *connect.Request[userv1.R
 	err = db.db.QueryRow(ctx,
 		`INSERT INTO users (email, password, first_name, last_name)
          VALUES ($1, $2, $3, $4)
-         RETURNING id, created_at`,
+         RETURNING id`,
 		req.Msg.GetEmail(), hashedPassword, req.Msg.GetFirstName(), req.Msg.GetLastName()).Scan(&userID)
 	if err != nil {
 		span.RecordError(err)
@@ -106,6 +113,5 @@ func (db *Store) RegisterUser(ctx context.Context, req *connect.Request[userv1.R
 		Id:        userID,
 		CreatedAt: timestamppb.Now(),
 	})
-	response.Header().Set("Some-Other-Header", "hello!")
 	return response, nil
 }

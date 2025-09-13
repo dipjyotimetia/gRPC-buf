@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	otelEndpoint    = "otel-collector:4317"
+	defaultOTELGRPC = "otel-collector:4317"
 	initialInterval = 2 * time.Second
 	maxInterval     = 5 * time.Second
 	maxElapsedTime  = 10 * time.Second
@@ -47,8 +47,13 @@ func StartTracer() (func(), error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	endpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+	if endpoint == "" {
+		endpoint = defaultOTELGRPC
+	}
+
 	expo, err := otlptracegrpc.New(ctx,
-		otlptracegrpc.WithEndpoint(otelEndpoint),
+		otlptracegrpc.WithEndpoint(endpoint),
 		otlptracegrpc.WithInsecure(),
 		otlptracegrpc.WithRetry(otlptracegrpc.RetryConfig{
 			Enabled:         true,

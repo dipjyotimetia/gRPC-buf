@@ -1,0 +1,64 @@
+name: Go CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache: true
+
+      - name: Show Go version
+        run: go version
+
+      - name: Download modules
+        run: go mod download
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test -race -cover ./...
+
+      - name: Lint (golangci-lint)
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.60.3
+          args: --timeout=5m
+
+      # Buf setup and proto checks
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ github.token }}
+
+      - name: Detect proto changes
+        id: changed-proto
+        uses: tj-actions/changed-files@v41
+        with:
+          files: proto/**
+
+      - name: Buf Lint
+        if: steps.changed-proto.outputs.any_changed == 'true'
+        uses: bufbuild/buf-lint-action@v1
+        with:
+          input: proto
+
+      - name: Buf Breaking
+        if: steps.changed-proto.outputs.any_changed == 'true'
+        uses: bufbuild/buf-breaking-action@v1
+        with:
+          against: 'https://github.com/dipjyotimetia/gRPC-buf.git#branch=main,ref=HEAD~1,subdir=proto'
+
+      - name: Generate Protobufs
+        run: buf generate

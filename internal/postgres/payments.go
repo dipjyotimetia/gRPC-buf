@@ -31,7 +31,7 @@ func (db *Store) MakePayment(ctx context.Context, req *connect.Request[paymentv1
 	_, err := db.db.Exec(ctx,
 		`INSERT INTO payments (card_no, card_type, name, address, amount)
          VALUES ($1, $2, $3, $4, $5)`,
-		cardNo, int(paymentv1.CardType_DebitCard), name, address[0], amount)
+		cardNo, int(paymentv1.CardType_CARD_TYPE_DEBIT), name, address[0], amount)
 	if err != nil {
 		span.RecordError(err)
 		slog.Error("Error storing payment", "error", err)
@@ -42,7 +42,7 @@ func (db *Store) MakePayment(ctx context.Context, req *connect.Request[paymentv1
 	slog.Info("Header value", "value", req.Header().Get("Some-Header"))
 
 	response := connect.NewResponse(&paymentv1.PaymentResponse{
-		Status: paymentv1.PaymentStatus_PAID,
+		Status: paymentv1.PaymentStatus_PAYMENT_STATUS_PAID,
 	})
 	response.Header().Set("Some-Other-Header", "hello!")
 	return response, nil

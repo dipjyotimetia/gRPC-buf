@@ -1,9 +1,9 @@
-FROM golang:1.24 AS builder
+FROM golang:1.25 AS builder
 
 ENV CGO_ENABLED=0
 ENV GO111MODULE=on
 
-WORKDIR /app
+WORKDIR /src
 
 COPY go.* ./
 RUN --mount=type=cache,target=/go/pkg/mod \
@@ -12,16 +12,10 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 COPY . .
 
 RUN --mount=type=cache,target=/go/pkg/mod \
-    CGO_ENABLED=0 GOOS=linux go build -a -o ./server ./cmd
-
-FROM debian:buster-slim
+    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w" -o /out/server ./cmd
+FROM gcr.io/distroless/base-debian12
 WORKDIR /app
-RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder /app/server /app/server
-
+USER 65532:65532
+COPY --from=builder /out/server /app/server
 EXPOSE 8080
-
 ENTRYPOINT ["/app/server"]

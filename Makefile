@@ -29,6 +29,10 @@ clean: ## Delete intermediate build artifacts
 test: build ## Run unit tests
 	$(GO) test -vet=off -race -cover ./...
 
+.PHONY: test-integration
+test-integration: ## Run integration tests (server must be running)
+	$(GO) test -tags=integration ./tests/integration/... ./cmd/server -v
+
 .PHONY: build
 build: generate ## Build all packages
 	$(GO) build ./...
@@ -53,14 +57,14 @@ upgrade: ## Upgrade dependencies
 .PHONY: migrate-create migrate-up migrate-down
 
 migrate-create: ## Create a new migration file
-    @read -p "Enter migration name: " name; \
-    migrate create -ext sql -dir internal/postgres/migrations -seq $$name
+	@read -p "Enter migration name: " name; \
+	migrate create -ext sql -dir internal/postgres/migrations -seq $$name
 
 migrate-up: ## Run migrations up
-    migrate -path internal/postgres/migrations -database "$(DATABASE_URL)" up
+	migrate -path internal/postgres/migrations -database "$(DATABASE_URL)" up
 
 migrate-down: ## Roll back migrations
-    migrate -path internal/postgres/migrations -database "$(DATABASE_URL)" down
+	migrate -path internal/postgres/migrations -database "$(DATABASE_URL)" down
 
 .PHONY: buf golangci-lint protoc-gen-go protoc-gen-go-grpc
 
@@ -74,5 +78,20 @@ protoc-gen-go:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 
 protoc-gen-go-grpc:
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+		go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
+.PHONY: protoc-gen-connect-go
+protoc-gen-connect-go:
+	go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
+
+.PHONY: generate
+generate: ## Generate code from protobufs
+	buf generate
+
+.PHONY: run
+run: ## Run the service locally
+	ENVIRONMENT=dev $(GO) run ./cmd
+
+.PHONY: setup
+setup: ## Install dev tools
+	$(MAKE) buf golangci-lint protoc-gen-go protoc-gen-go-grpc protoc-gen-connect-go

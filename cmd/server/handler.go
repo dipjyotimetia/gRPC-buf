@@ -8,11 +8,13 @@ import (
 	"connectrpc.com/grpchealth"
 	"connectrpc.com/grpcreflect"
 	"connectrpc.com/otelconnect"
+	"github.com/grpc-buf/internal/gen/proto/expense/expensev1connect"
 	"github.com/grpc-buf/internal/gen/proto/payment/paymentv1connect"
 	"github.com/grpc-buf/internal/gen/proto/registration/userv1connect"
+	"github.com/grpc-buf/internal/service"
 )
 
-func setupHandler() *http.ServeMux {
+func setupHandler(payment service.PaymentService, user service.UserService, expense service.ExpenseService) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	otelInterceptor, err := otelconnect.NewInterceptor()
@@ -22,13 +24,19 @@ func setupHandler() *http.ServeMux {
 
 	compress1KB := connect.WithCompressMinBytes(1024)
 	mux.Handle(paymentv1connect.NewPaymentHandler(
-		paymentService,
+		payment,
+		compress1KB,
+		connect.WithInterceptors(otelInterceptor),
+	))
+
+	mux.Handle(expensev1connect.NewExpenseServiceHandler(
+		expense,
 		compress1KB,
 		connect.WithInterceptors(otelInterceptor),
 	))
 
 	mux.Handle(userv1connect.NewUserServiceHandler(
-		userService,
+		user,
 		compress1KB,
 		connect.WithInterceptors(otelInterceptor),
 	))
@@ -36,6 +44,7 @@ func setupHandler() *http.ServeMux {
 	mux.Handle(grpchealth.NewHandler(
 		grpchealth.NewStaticChecker(
 			paymentv1connect.PaymentName,
+			expensev1connect.ExpenseServiceName,
 			userv1connect.UserServiceName),
 		compress1KB,
 	))
@@ -43,6 +52,7 @@ func setupHandler() *http.ServeMux {
 	mux.Handle(grpcreflect.NewHandlerV1(
 		grpcreflect.NewStaticReflector(
 			paymentv1connect.PaymentName,
+			expensev1connect.ExpenseServiceName,
 			userv1connect.UserServiceName),
 		compress1KB,
 	))
@@ -50,10 +60,17 @@ func setupHandler() *http.ServeMux {
 	mux.Handle(grpcreflect.NewHandlerV1Alpha(
 		grpcreflect.NewStaticReflector(
 			paymentv1connect.PaymentName,
+			expensev1connect.ExpenseServiceName,
 			userv1connect.UserServiceName,
 		),
 		compress1KB,
 	))
+
+	// Basic liveness endpoint for container runtime checks
+	mux.HandleFunc("/livez", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
 
 	return mux
 }

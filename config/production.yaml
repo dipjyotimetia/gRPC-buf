@@ -1,0 +1,16 @@
+environment: prod
+server:
+  port: 8080
+  cors_allowed_origins: []
+  run_migrations: true
+  log_level: info
+database:
+  url: ${DATABASE_URL}
+  max_conns: 100
+  min_conns: 5
+otel:
+  endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+  service_name: grpc-buf
+security:
+  jwt_secret: ${JWT_SECRET}
+
