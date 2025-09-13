@@ -97,6 +97,7 @@ Advanced overrides (Koanf):
 | `make migrate-up` | Apply database migrations |
 | `make migrate-down` | Roll back database migrations |
 | `make migrate-run` | Run embedded migrations via Go |
+| `make migrate-run-local DSN=postgres://...` | Run embedded migrations against a custom DSN |
 
 ## Project Structure
 
@@ -137,3 +138,16 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License.
+Migrations (local)
+- Using embedded migrator with custom connection:
+  - `make migrate-run-local DSN=postgres://user:pass@localhost:5432/grpcbuf?sslmode=disable`
+- Using external migrator (requires migrate CLI):
+  - `make migrate-up DSN=postgres://...`
+  - `make migrate-down DSN=postgres://...`
+Using .env for local dev
+- Copy `.env.example` to `.env` and adjust values.
+- The Makefile auto-loads `.env` when present.
+- Example:
+  - `CONFIG_PATH=./config/local.yaml`
+  - `DATABASE_URL=postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable`
+  - `JWT_SECRET=change-me`

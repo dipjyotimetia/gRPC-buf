@@ -93,12 +93,12 @@ func Run(cfg *config.Config) error {
 
 	ctx := context.Background()
 
-    // Determine address: prefer config, else PORT env, else default 8080
+    // Determine address: prefer Cloud Run $PORT env, else config, else default 8080
     addr := ":8080"
-    if cfg != nil && cfg.Server.Port != 0 {
-        addr = ":" + strconv.Itoa(cfg.Server.Port)
-    } else if p := strings.TrimSpace(os.Getenv("PORT")); p != "" { // legacy override
+    if p := strings.TrimSpace(os.Getenv("PORT")); p != "" { // Cloud Run sets PORT
         addr = ":" + p
+    } else if cfg != nil && cfg.Server.Port != 0 {
+        addr = ":" + strconv.Itoa(cfg.Server.Port)
     }
     srv := &http.Server{
         Addr: addr,

@@ -47,10 +47,10 @@ type Config struct {
 // Env overrides use the prefix CFG_ and double underscore (__) to denote nesting.
 // Example: CFG_SERVER__PORT=9090 overrides server.port.
 func Load(path string) (*Config, error) {
-	k := kfn.New(".")
-	if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
-		return nil, fmt.Errorf("load config file: %w", err)
-	}
+    k := kfn.New(".")
+    if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
+        return nil, fmt.Errorf("load config file: %w", err)
+    }
 	// Env overrides with prefix CFG_. Replace __ with . for nested keys.
 	if err := k.Load(env.Provider("CFG_", ".", func(s string) string {
 		s = strings.TrimPrefix(s, "CFG_")
@@ -60,11 +60,14 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("load env overrides: %w", err)
 	}
 
-	var c Config
-	if err := k.Unmarshal("", &c); err != nil {
-		return nil, fmt.Errorf("unmarshal config: %w", err)
-	}
-	return &c, nil
+    var c Config
+    if err := k.Unmarshal("", &c); err != nil {
+        return nil, fmt.Errorf("unmarshal config: %w", err)
+    }
+    // Best-effort env interpolation for secret fields
+    c.Database.URL = os.ExpandEnv(c.Database.URL)
+    c.Security.JWTSecret = os.ExpandEnv(c.Security.JWTSecret)
+    return &c, nil
 }
 
 // Validate checks the configuration and returns an error if required fields are missing

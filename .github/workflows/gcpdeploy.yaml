@@ -3,7 +3,9 @@ name: Deploy
 on:
   push:
     branches: [ main ]
-
+env:
+  SERVICE: grpc-buf
+  REGION: australia-southeast2
 jobs:
   deploy:
     name: Deploy
@@ -22,10 +24,26 @@ jobs:
         uses: 'google-github-actions/auth@v3'
         with:
           create_credentials_file: true
-          workload_identity_provider: 'projects/1042576031837/locations/global/workloadIdentityPools/ghactions/providers/github-identity-pool-provider'
-          service_account: 'gha-deploy@dev-aileron-214211.iam.gserviceaccount.com'
+          workload_identity_provider: '${{ secrets.GCP_WIF_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SA_EMAIL }}'
 
-      - uses: 'google-github-actions/deploy-cloudrun@v3'
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: 'google-github-actions/deploy-cloudrun@v3'
         with:
-          image: 'us-docker.pkg.dev/cloudrun/container/hello:latest'
-          service: 'hello-cloud-run'
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          source: '.'
+          env_vars: |
+            ENVIRONMENT=prod
+          secrets: |
+            DATABASE_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/DATABASE_URL/versions/latest
+            JWT_SECRET=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/JWT_SECRET/versions/latest
+          flags: >-
+            --use-http2
+            --allow-unauthenticated
+            --concurrency=80
+            --cpu=1
+            --memory=256Mi
+            --max-instances=1
+            --cpu-throttling
