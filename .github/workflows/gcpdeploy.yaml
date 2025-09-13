@@ -23,6 +23,7 @@ jobs:
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v3'
         with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
           create_credentials_file: true
           workload_identity_provider: '${{ secrets.GCP_WIF_PROVIDER }}'
           service_account: '${{ secrets.GCP_SA_EMAIL }}'
@@ -31,6 +32,7 @@ jobs:
         id: deploy
         uses: 'google-github-actions/deploy-cloudrun@v3'
         with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
           service: ${{ env.SERVICE }}
           region: ${{ env.REGION }}
           source: '.'
