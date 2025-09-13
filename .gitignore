@@ -1,6 +1,5 @@
 .idea
 .vscode
-server
 bin/
 dist/
 coverage*

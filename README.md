@@ -1,43 +1,29 @@
 # gRPC-buf
 
-A modern Golang service template featuring dual protocol APIs (gRPC/REST) using Connect, with deployment support for Google Cloud Run and event streaming capabilities.
+A modern Golang service template featuring dual protocol APIs (gRPC/REST) using Connect, with PostgreSQL persistence and production-focused defaults.
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/dipjyotimetia/gRPC-buf)](go.mod)
 [![License](https://img.shields.io/github/license/dipjyotimetia/gRPC-buf)](LICENSE)
 
 ## Overview
 
-gRPC-buf is a production-ready template for building cloud-native microservices with:
+gRPC-buf is a lean, production-friendly service starter with:
 
-- 🚀 **Dual Protocol Support**: gRPC and REST endpoints via [connectrpc.com/connect](https://connectrpc.com)
-- 🌩️ **Cloud-Native**: Ready for Google Cloud Run deployment
-- 📨 **Event Streaming**: Built-in support for Pub/Sub and Kafka
-- 🛠️ **Modern Tooling**: Streamlined development with Buf for Protocol Buffers
-- 🔍 **Observability**: OpenTelemetry integration for monitoring
-- 🗄️ **Persistence**: PostgreSQL database integration
-- 💰 **Expenses API**: Resource-style CRUD for expenses
+- Dual protocol APIs via Connect (REST + gRPC on one port)
+- PostgreSQL integration with embedded migrations
+- JWT auth verification and simple login/registration flows
+- Basic rate limiting for the login endpoint
+- Health, readiness, and version endpoints
+- Protobufs managed with Buf (lint, generate)
 
 ## Features
 
-### API Development
-- Unified gRPC and REST API endpoints using Connect
-- Automatic OpenAPI documentation generation
-- Protocol Buffer validation and linting with Buf
-- Type-safe API contracts
-
-### Cloud Integration
-- Containerized deployment to Google Cloud Run
-- Google Pub/Sub integration for event-driven architectures
-- Kafka support for messaging
-- Comprehensive OpenTelemetry instrumentation
-- PostgreSQL for reliable data persistence
-
-### Developer Experience
-- Fast development workflow with hot reload
-- Comprehensive test suite with integration tests
-- Makefile-based task automation
-- Docker containerization for consistent environments
-- Database migrations
+### What’s Included
+- Connect handlers for REST and gRPC
+- Buf-based generation and linting
+- Integration tests (Docker compose-based)
+- Makefile tasks (build, test, lint, migrations)
+- Docker/Compose for local development
 
 ## Prerequisites
 
@@ -73,6 +59,8 @@ gRPC-buf is a production-ready template for building cloud-native microservices 
    - REST API: http://localhost:8080
    - gRPC: localhost:8080
     - Health: http://localhost:8080/livez
+    - Readiness: http://localhost:8080/readyz
+    - Version: http://localhost:8080/version
 
 Expense API (REST examples):
 - Create: POST `/v1/expenses` body: `{ "expense": { "user_id": "<uuid>", "amount": {"currency_code":"USD","units":"10"}, "category":"food" } }`
@@ -81,22 +69,17 @@ Expense API (REST examples):
 - Update: PATCH `/v1/expenses/{id}` body: `{ "expense": {"id": "{id}", "description":"new"}, "update_mask": {"paths":["description"]}}`
 - Delete: DELETE `/v1/expenses/{id}`
 
-Environment variables:
-- `ENVIRONMENT` (dev|prod) default: dev in `make run`
-- `DATABASE_URL` Postgres connection (prod required)
-- `DB_MAX_CONNS`/`DB_MIN_CONNS` tune pool sizes
-- `OTEL_EXPORTER_OTLP_ENDPOINT` default: `otel-collector:4317`
-- `OTEL_SERVICE_NAME` default: `grpc-buf`
-- `JWT_SECRET` JWT signing key (prod required)
+Environment variables (optional):
+- `CONFIG_PATH` to point to a YAML config file.
+- Production configs may reference environment variables (YAML interpolation) for secrets like `DATABASE_URL` and `JWT_SECRET`.
 
 Configuration files:
 - YAML configs live under `config/` and are loaded at startup:
-  - `config/local.yaml` (used when `ENVIRONMENT` is dev or not set)
-  - `config/production.yaml` (used when `ENVIRONMENT` is prod)
-- Override with `CONFIG_PATH=/path/to/config.yaml`.
-- Values in config are exported to environment variables for compatibility with existing code.
+  - `config/local.yaml` (default for local dev)
+  - `config/production.yaml` (example for prod; secrets via environment interpolation if desired)
+- Override file path with `CONFIG_PATH=/path/to/config.yaml`.
 
-Advanced overrides with Koanf:
+Advanced overrides (Koanf):
 - You can override any YAML key via environment variables using the `CFG_` prefix and `__` as a nesting separator.
 - Examples:
   - `CFG_SERVER__PORT=9090` overrides `server.port`.
@@ -113,26 +96,29 @@ Advanced overrides with Koanf:
 | `make clean` | Clean up generated files |
 | `make migrate-up` | Apply database migrations |
 | `make migrate-down` | Roll back database migrations |
+| `make migrate-run` | Run embedded migrations via Go |
 
 ## Project Structure
 
 ```
 .
-├── cmd/                # Application entry points
-│   ├── main.go         # Main application
-│   └── server/         # Server implementation
-├── internal/           # Private application code
-│   ├── const/          # Constants
-│   ├── gen/proto/      # Generated protocol buffer code
-│   ├── logz/           # Logging utilities
-│   ├── postgres/       # Database access layer
-│   └── service/        # Business logic
+├── cmd/                    # Application entrypoints
+│   └── api/                # Service binary
+│       └── main.go         # Main
+├── internal/               # Private application code
+│   ├── config/             # Config loading & env export (Koanf)
+│   ├── gen/proto/          # Generated protocol buffer code
+│   ├── postgres/           # Database access layer + migrations
+│   ├── security/           # JWT verification
+│   ├── server/             # Server lifecycle (listen/shutdown, CORS, h2c)
+│   ├── service/            # Thin service layer delegating to datastore
+│   └── transport/          # HTTP wiring, health, reflection
 ├── proto/              # Protocol buffer definitions
 │   ├── google/         # Google API definitions
 │   ├── payment/        # Payment service definitions
 │   ├── expense/        # Expense service definitions
 │   └── registration/   # User registration definitions
-└── scripts/            # Utility scripts
+└── scripts/                # Utility scripts
 ```
 
 ## Documentation

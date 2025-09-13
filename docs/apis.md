@@ -1,6 +1,54 @@
 # APIs
 
-This service exposes both REST and gRPC using Connect. REST routes are derived from google.api.http annotations in the proto files.
+This service exposes both REST and RPC using Connect.
+Supported protocols:
+- Connect (default, over HTTP/1.1 or HTTP/2)
+- gRPC
+- gRPC-Web
+
+REST routes are derived from `google.api.http` annotations in the proto files.
+
+Examples (Go):
+
+```go
+// Connect protocol (default)
+client := paymentv1connect.NewPaymentClient(
+    http.DefaultClient,
+    "http://localhost:8080",
+)
+res, err := client.MakePayment(ctx, connect.NewRequest(&paymentv1.PaymentRequest{/*...*/}))
+
+// gRPC
+grpcClient := paymentv1connect.NewPaymentClient(
+    http.DefaultClient,
+    "http://localhost:8080",
+    connect.WithGRPC(),
+)
+
+// gRPC-Web
+webClient := userv1connect.NewUserServiceClient(
+    http.DefaultClient,
+    "http://localhost:8080",
+    connect.WithGRPCWeb(),
+)
+```
+
+Authenticated call with Bearer token (Connect)
+
+```go
+// After logging in and receiving an access token:
+token := "<access_token>"
+
+expClient := expensev1connect.NewExpenseServiceClient(
+    http.DefaultClient,
+    "http://localhost:8080",
+)
+req := connect.NewRequest(&expensev1.ListExpensesRequest{UserId: "<user-id>"})
+req.Header().Set("Authorization", "Bearer "+token)
+resp, err := expClient.ListExpenses(ctx, req)
+if err != nil { /* handle */ }
+fmt.Println("count:", len(resp.Msg.GetExpenses()))
+```
 
 User API
 - Register: POST `/v1/user:register` (body: RegisterRequest)
@@ -46,4 +94,3 @@ Protobuf Style
 - Enums use `_UNSPECIFIED = 0` and prefixed values.
 - RPCs that perform actions use colon suffixes (e.g., `/resource:verb`).
 - CRUD uses resource-oriented URIs for Expenses.
-

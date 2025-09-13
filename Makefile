@@ -31,7 +31,7 @@ test: build ## Run unit tests
 
 .PHONY: test-integration
 test-integration: ## Run integration tests (server must be running)
-	$(GO) test -tags=integration ./tests/integration/... ./cmd/server -v
+	$(GO) test -tags=integration ./tests/integration/... ./internal/server -v
 
 .PHONY: build
 build: generate ## Build all packages
@@ -54,7 +54,7 @@ upgrade: ## Upgrade dependencies
 	go get -u -t ./... && go mod tidy -v
 
 # Migration commands
-.PHONY: migrate-create migrate-up migrate-down
+.PHONY: migrate-create migrate-up migrate-down migrate-run
 
 migrate-create: ## Create a new migration file
 	@read -p "Enter migration name: " name; \
@@ -65,6 +65,9 @@ migrate-up: ## Run migrations up
 
 migrate-down: ## Roll back migrations
 	migrate -path internal/postgres/migrations -database "$(DATABASE_URL)" down
+
+migrate-run: ## Run embedded migrations using Go binary
+	$(GO) run ./cmd/migrate
 
 .PHONY: buf golangci-lint protoc-gen-go protoc-gen-go-grpc
 
@@ -90,7 +93,7 @@ generate: ## Generate code from protobufs
 
 .PHONY: run
 run: ## Run the service locally
-	ENVIRONMENT=dev $(GO) run ./cmd
+	ENVIRONMENT=dev $(GO) run ./cmd/api
 
 .PHONY: setup
 setup: ## Install dev tools

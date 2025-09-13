@@ -1,6 +1,6 @@
 # Architecture
 
-This service exposes dual-protocol APIs (gRPC and REST) using Connect over a single HTTP/2 h2c port. It persists to PostgreSQL, ships traces to an OTel collector (Jaeger by default in docker-compose), and is containerized for Cloud Run.
+This service exposes dual-protocol APIs (gRPC and REST) using Connect over a single HTTP/2 h2c port. It persists to PostgreSQL and ships with docker/compose for local and CI.
 
 High-level
 
@@ -15,21 +15,15 @@ flowchart LR
     G[HTTP/2 h2c Server\nConnect Handlers]
     S[Service Layer]
     D[(Postgres)]
-    T[OTel Tracer]
   end
 
   A-->G
   B-->G
   G-->S
   S-->D
-  S-->T
+  
 
-  subgraph Observability
-    O[OTel Collector]
-    J[Jaeger]
-  end
-
-  T-->O-->J
+ 
 ```
 
 Request Flow
@@ -42,16 +36,13 @@ sequenceDiagram
   participant X as Connect Handler
   participant S as Service
   participant DB as Postgres
-  participant OT as OTel
 
   C->>H: HTTP/2 Request
   H->>X: Route to handler
   X->>S: Typed request (Connect)
   activate S
-  S->>OT: Start span
   S->>DB: Query/Exec
   DB-->>S: Rows/Result
-  S->>OT: End span
   deactivate S
   S-->>X: Typed response
   X-->>H: Encoded (REST/gRPC)
@@ -59,11 +50,11 @@ sequenceDiagram
 ```
 
 Components
-- Connect Handlers: `cmd/server/handler.go` wires service implementations to HTTP mux; also serves health and reflection.
+- Connect Handlers: `internal/transport/http/handler.go` wires service implementations to HTTP mux; also serves health and reflection.
 - Service Layer: `internal/service` provides interfaces; implementations delegate to the datastore.
 - Datastore (pgx pool): `internal/postgres` with embedded migrations and query methods.
 - Configuration: `internal/config` (Koanf) loads YAML + env overrides and exports envs for compatibility.
-- Observability: `internal/logz` creates an OTLP exporter; handlers add OTel middleware.
+- Auth & Rate Limit: `internal/security` and `internal/transport/middleware/*`.
 
 Data Model (partial)
 
@@ -103,5 +94,3 @@ erDiagram
 
 Ports & Protocols
 - App: HTTP/2 h2c on port 8080 (gRPC + REST via Connect)
-- OTel gRPC exporter: default `otel-collector:4317`
-

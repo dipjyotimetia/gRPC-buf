@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	constant "github.com/grpc-buf/internal/const"
 	expensev1 "github.com/grpc-buf/internal/gen/proto/expense"
 	money "github.com/grpc-buf/internal/gen/proto/google/type"
 	"github.com/jackc/pgx/v5"
@@ -17,9 +16,6 @@ import (
 )
 
 func (s *Store) CreateExpense(ctx context.Context, req *connect.Request[expensev1.CreateExpenseRequest]) (*connect.Response[expensev1.Expense], error) {
-	ctx, span := constant.Tracer.Start(ctx, "CreateExpense")
-	defer span.End()
-
 	exp := req.Msg.GetExpense()
 	if exp == nil {
 		return nil, status.Error(codes.InvalidArgument, "expense is required")
@@ -46,7 +42,6 @@ func (s *Store) CreateExpense(ctx context.Context, req *connect.Request[expensev
 		exp.GetUserId(), amountCents, exp.GetAmount().GetCurrencyCode(), exp.GetCategory(), exp.GetDescription(),
 	).Scan(&id, &createTime, &updateTime)
 	if err != nil {
-		span.RecordError(err)
 		return nil, status.Errorf(codes.Internal, "failed to create expense: %v", err)
 	}
 
@@ -63,9 +58,6 @@ func (s *Store) CreateExpense(ctx context.Context, req *connect.Request[expensev
 }
 
 func (s *Store) GetExpense(ctx context.Context, req *connect.Request[expensev1.GetExpenseRequest]) (*connect.Response[expensev1.Expense], error) {
-	ctx, span := constant.Tracer.Start(ctx, "GetExpense")
-	defer span.End()
-
 	id := strings.TrimSpace(req.Msg.GetId())
 	if id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
@@ -81,7 +73,6 @@ func (s *Store) GetExpense(ctx context.Context, req *connect.Request[expensev1.G
          FROM expenses WHERE id=$1`, id,
 	).Scan(&userID, &amountCents, &currency, &category, &description, &createdAt, &updatedAt)
 	if err != nil {
-		span.RecordError(err)
 		return nil, status.Errorf(codes.NotFound, "expense not found: %v", err)
 	}
 
@@ -100,9 +91,6 @@ func (s *Store) GetExpense(ctx context.Context, req *connect.Request[expensev1.G
 }
 
 func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1.ListExpensesRequest]) (*connect.Response[expensev1.ListExpensesResponse], error) {
-	ctx, span := constant.Tracer.Start(ctx, "ListExpenses")
-	defer span.End()
-
 	userID := strings.TrimSpace(req.Msg.GetUserId())
 	pageSize := req.Msg.GetPageSize()
 	if pageSize <= 0 || pageSize > 1000 {
@@ -131,7 +119,6 @@ func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1
 		)
 	}
 	if err != nil {
-		span.RecordError(err)
 		return nil, status.Errorf(codes.Internal, "list query failed: %v", err)
 	}
 	defer rows.Close()
@@ -147,7 +134,6 @@ func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1
 			break
 		}
 		if err := rows.Scan(&id, &uid, &amountCents, &currency, &category, &description, &createdAt, &updatedAt); err != nil {
-			span.RecordError(err)
 			return nil, status.Errorf(codes.Internal, "scan failed: %v", err)
 		}
 		units := amountCents / 100
@@ -169,9 +155,6 @@ func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1
 }
 
 func (s *Store) UpdateExpense(ctx context.Context, req *connect.Request[expensev1.UpdateExpenseRequest]) (*connect.Response[expensev1.Expense], error) {
-	ctx, span := constant.Tracer.Start(ctx, "UpdateExpense")
-	defer span.End()
-
 	exp := req.Msg.GetExpense()
 	if exp == nil || strings.TrimSpace(exp.GetId()) == "" {
 		return nil, status.Error(codes.InvalidArgument, "expense.id is required")
@@ -210,7 +193,6 @@ func (s *Store) UpdateExpense(ctx context.Context, req *connect.Request[expensev
 
 	_, err := s.db.Exec(ctx, fmt.Sprintf("UPDATE expenses SET %s, updated_at=NOW() WHERE id=$%d", strings.Join(set, ","), idx), args...)
 	if err != nil {
-		span.RecordError(err)
 		return nil, status.Errorf(codes.Internal, "update failed: %v", err)
 	}
 	// Return updated row
@@ -218,16 +200,12 @@ func (s *Store) UpdateExpense(ctx context.Context, req *connect.Request[expensev
 }
 
 func (s *Store) DeleteExpense(ctx context.Context, req *connect.Request[expensev1.DeleteExpenseRequest]) (*connect.Response[timestamppb.Timestamp], error) {
-	ctx, span := constant.Tracer.Start(ctx, "DeleteExpense")
-	defer span.End()
-
 	id := strings.TrimSpace(req.Msg.GetId())
 	if id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 	res, err := s.db.Exec(ctx, `DELETE FROM expenses WHERE id=$1`, id)
 	if err != nil {
-		span.RecordError(err)
 		return nil, status.Errorf(codes.Internal, "delete failed: %v", err)
 	}
 	n := res.RowsAffected()
