@@ -4,13 +4,15 @@ server:
   cors_allowed_origins: []
   run_migrations: true
   log_level: info
+  login_rps: 5
+  login_burst: 10
 database:
   url: ${DATABASE_URL}
   max_conns: 100
   min_conns: 5
-otel:
-  endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
-  service_name: grpc-buf
+  connect_timeout: 60s
 security:
   jwt_secret: ${JWT_SECRET}
-
+  jwt_issuer: grpc-buf
+  jwt_audience: grpc-buf
+  auth_skip_suffixes: ["/RegisterUser", "/LoginUser"]

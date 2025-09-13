@@ -14,43 +14,43 @@ import (
 )
 
 type ServerConfig struct {
-	Port               int      `yaml:"port"`
-	CORSAllowedOrigins []string `yaml:"cors_allowed_origins"`
-	RunMigrations      bool     `yaml:"run_migrations"`
-	LogLevel           string   `yaml:"log_level"`
+    Port               int      `yaml:"port"`
+    CORSAllowedOrigins []string `yaml:"cors_allowed_origins"`
+    RunMigrations      bool     `yaml:"run_migrations"`
+    LogLevel           string   `yaml:"log_level"`
+    LoginRPS           int      `yaml:"login_rps"`
+    LoginBurst         int      `yaml:"login_burst"`
 }
 
 type DatabaseConfig struct {
-	URL      string `yaml:"url"`
-	MaxConns int    `yaml:"max_conns"`
-	MinConns int    `yaml:"min_conns"`
-}
-
-type OTelConfig struct {
-	Endpoint    string `yaml:"endpoint"`
-	ServiceName string `yaml:"service_name"`
+    URL      string `yaml:"url"`
+    MaxConns int    `yaml:"max_conns"`
+    MinConns int    `yaml:"min_conns"`
+    ConnectTimeout string `yaml:"connect_timeout"`
 }
 
 type SecurityConfig struct {
-	JWTSecret string `yaml:"jwt_secret"`
+    JWTSecret string `yaml:"jwt_secret"`
+    JWTIssuer string `yaml:"jwt_issuer"`
+    JWTAudience string `yaml:"jwt_audience"`
+    AuthSkipSuffixes []string `yaml:"auth_skip_suffixes"`
 }
 
 type Config struct {
-	Environment string         `yaml:"environment"`
-	Server      ServerConfig   `yaml:"server"`
-	Database    DatabaseConfig `yaml:"database"`
-	OTel        OTelConfig     `yaml:"otel"`
-	Security    SecurityConfig `yaml:"security"`
+    Environment string         `yaml:"environment"`
+    Server      ServerConfig   `yaml:"server"`
+    Database    DatabaseConfig `yaml:"database"`
+    Security    SecurityConfig `yaml:"security"`
 }
 
 // Load reads the YAML config file at path and applies env overrides via koanf.
 // Env overrides use the prefix CFG_ and double underscore (__) to denote nesting.
 // Example: CFG_SERVER__PORT=9090 overrides server.port.
 func Load(path string) (*Config, error) {
-	k := kfn.New(".")
-	if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
-		return nil, fmt.Errorf("load config file: %w", err)
-	}
+    k := kfn.New(".")
+    if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
+        return nil, fmt.Errorf("load config file: %w", err)
+    }
 	// Env overrides with prefix CFG_. Replace __ with . for nested keys.
 	if err := k.Load(env.Provider("CFG_", ".", func(s string) string {
 		s = strings.TrimPrefix(s, "CFG_")
@@ -60,11 +60,14 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("load env overrides: %w", err)
 	}
 
-	var c Config
-	if err := k.Unmarshal("", &c); err != nil {
-		return nil, fmt.Errorf("unmarshal config: %w", err)
-	}
-	return &c, nil
+    var c Config
+    if err := k.Unmarshal("", &c); err != nil {
+        return nil, fmt.Errorf("unmarshal config: %w", err)
+    }
+    // Best-effort env interpolation for secret fields
+    c.Database.URL = os.ExpandEnv(c.Database.URL)
+    c.Security.JWTSecret = os.ExpandEnv(c.Security.JWTSecret)
+    return &c, nil
 }
 
 // Validate checks the configuration and returns an error if required fields are missing
@@ -138,18 +141,20 @@ func (c *Config) ApplyEnv() error {
 		set("DB_MIN_CONNS", fmt.Sprintf("%d", c.Database.MinConns))
 	}
 
-	if c.OTel.Endpoint != "" {
-		set("OTEL_EXPORTER_OTLP_ENDPOINT", c.OTel.Endpoint)
-	}
-	if c.OTel.ServiceName != "" {
-		set("OTEL_SERVICE_NAME", c.OTel.ServiceName)
-	}
-
-	if c.Security.JWTSecret != "" {
-		set("JWT_SECRET", c.Security.JWTSecret)
-	}
-	if c.Server.LogLevel != "" {
-		set("LOG_LEVEL", strings.ToLower(c.Server.LogLevel))
-	}
-	return nil
+    if c.Security.JWTSecret != "" {
+        set("JWT_SECRET", c.Security.JWTSecret)
+    }
+    if c.Security.JWTIssuer != "" {
+        set("JWT_ISSUER", c.Security.JWTIssuer)
+    }
+    if c.Security.JWTAudience != "" {
+        set("JWT_AUDIENCE", c.Security.JWTAudience)
+    }
+    if len(c.Security.AuthSkipSuffixes) > 0 {
+        set("AUTH_SKIP_SUFFIXES", strings.Join(c.Security.AuthSkipSuffixes, ","))
+    }
+    if c.Server.LogLevel != "" {
+        set("LOG_LEVEL", strings.ToLower(c.Server.LogLevel))
+    }
+    return nil
 }

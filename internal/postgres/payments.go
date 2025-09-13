@@ -5,16 +5,12 @@ import (
 	"log/slog"
 
 	"connectrpc.com/connect"
-	constant "github.com/grpc-buf/internal/const"
 	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func (db *Store) MakePayment(ctx context.Context, req *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error) {
-	ctx, span := constant.Tracer.Start(ctx, "MakePayment")
-	defer span.End()
-
 	// Extract payment details from request
 	name := req.Msg.GetName()
 	amount := req.Msg.GetAmount()
@@ -23,7 +19,6 @@ func (db *Store) MakePayment(ctx context.Context, req *connect.Request[paymentv1
 
 	// Validate payment details
 	if !VerifyCard(cardNo) || amount < 0.0 || len(address) == 0 {
-		span.RecordError(status.Error(codes.FailedPrecondition, "field validation failed"))
 		return nil, status.Errorf(codes.FailedPrecondition, "field validation failed")
 	}
 
@@ -33,7 +28,6 @@ func (db *Store) MakePayment(ctx context.Context, req *connect.Request[paymentv1
          VALUES ($1, $2, $3, $4, $5)`,
 		cardNo, int(paymentv1.CardType_CARD_TYPE_DEBIT), name, address[0], amount)
 	if err != nil {
-		span.RecordError(err)
 		slog.Error("Error storing payment", "error", err)
 		return nil, status.Errorf(codes.Internal, "Internal error: %v", err)
 	}

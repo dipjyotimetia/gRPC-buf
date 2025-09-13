@@ -3,7 +3,9 @@ name: Deploy
 on:
   push:
     branches: [ main ]
-
+env:
+  SERVICE: grpc-buf
+  REGION: australia-southeast2
 jobs:
   deploy:
     name: Deploy
@@ -12,57 +14,36 @@ jobs:
       contents: 'read'
       id-token: 'write'
     env:
-      IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_APP_NAME }}
       DOCKER_BUILDKIT: 1
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - id: 'auth'
-        uses: 'google-github-actions/auth@v1'
         name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v3'
         with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'
-          token_format: 'access_token'
-          access_token_lifetime: '300s'
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-
-      - uses: 'docker/login-action@v2'
-        name: Login to GCR
-        with:
-          registry: 'gcr.io'
-          username: 'oauth2accesstoken'
-          password: '${{ steps.auth.outputs.access_token }}'
-          logout: true
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Build Docker image
-        run: docker build . --tag $IMAGE_NAME
-
-      #      - name: Test Docker image
-      #        run: docker run $IMAGE_NAME sh -c "go test -v"
-
-      - name: Push Docker image
-        run: docker push $IMAGE_NAME
-
-      - id: 'auth-cr'
-        uses: 'google-github-actions/auth@v1'
-        name: 'Authenticate to Google Cloud'
-        with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+          create_credentials_file: true
+          workload_identity_provider: '${{ secrets.GCP_WIF_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SA_EMAIL }}'
 
       - name: Deploy to Cloud Run
         id: deploy
-        uses: google-github-actions/deploy-cloudrun@v1
+        uses: 'google-github-actions/deploy-cloudrun@v3'
         with:
-          service:  ${{ secrets.GCP_APP_NAME }}
-          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_APP_NAME }}:latest
-          region: australia-southeast1
-          # Map Secret Manager secret DATABASE_URL to env var DATABASE_URL in Cloud Run
-          # Update the resource path to your project/secret/version
-          # secrets: DATABASE_URL=projects/PROJECT_NUMBER/secrets/DATABASE_URL/versions/latest
-          flags: --use-http2
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          source: '.'
+          env_vars: |
+            ENVIRONMENT=prod
+          secrets: |
+            DATABASE_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/DATABASE_URL/versions/latest
+            JWT_SECRET=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/JWT_SECRET/versions/latest
+          flags: >-
+            --use-http2
+            --allow-unauthenticated
+            --concurrency=80
+            --cpu=1
+            --memory=256Mi
+            --max-instances=1
+            --cpu-throttling

@@ -6,7 +6,8 @@ Local Development
 - Initial setup: `make setup` (installs buf + linters)
 - Generate protos: `make generate` (buf generate)
 - Run app: `make run` (uses config/local.yaml)
-- Compose stack: `docker compose up -d` (Postgres, Jaeger, OTel, API)
+- Compose stack: `docker compose up -d` (Postgres, API)
+- Run migrations: `make migrate-run` (runs embedded SQL)
 - Lint: `make lint`
 - Unit tests: `make test`
 - Integration tests: start stack then `make test-integration`
@@ -35,7 +36,7 @@ CI
   - Triggered via `workflow_dispatch` or repo var `RUN_INTEGRATION_TESTS=true` on pushes to main
   - Runs `docker compose up -d --build`
   - Waits for `/livez`
-  - Runs `go test -tags=integration ./tests/integration/... ./cmd/server -v`
+  - Runs `go test -tags=integration ./tests/integration/... ./internal/server -v`
   - Dumps container logs on failure; tears down stack
 
 CD
@@ -44,4 +45,3 @@ CD
   - Builds and pushes image to GCR
   - Deploys to Cloud Run with HTTP/2 flag
   - Use Secret Manager for `DATABASE_URL` and set other envs as required
-

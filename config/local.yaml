@@ -4,13 +4,15 @@ server:
   cors_allowed_origins: ["*"]
   run_migrations: true
   log_level: debug
+  login_rps: 5
+  login_burst: 10
 database:
   url: postgres://postgres:postgres@postgres:5432/grpcbuf?sslmode=disable
   max_conns: 20
   min_conns: 2
-otel:
-  endpoint: otel-collector:4317
-  service_name: grpc-buf
+  connect_timeout: 60s
 security:
   jwt_secret: insecure-dev-secret
-
+  jwt_issuer: grpc-buf
+  jwt_audience: grpc-buf
+  auth_skip_suffixes: ["/RegisterUser", "/LoginUser"]

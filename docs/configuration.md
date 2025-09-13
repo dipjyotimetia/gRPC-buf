@@ -7,11 +7,9 @@ Files
 - `config/production.yaml`: sane defaults for prod; secret values are read from env
 
 Resolution
-- On startup, the app selects a file by `ENVIRONMENT`:
-  - `dev`/empty: `config/local.yaml`
-  - `prod`: `config/production.yaml`
-- You can override file selection with `CONFIG_PATH=/path/to/config.yaml`.
-- After loading, values are exported to environment variables so existing code continues to work.
+- On startup, the app resolves a file path:
+  - default: `config/local.yaml`
+  - `CONFIG_PATH=/path/to/config.yaml` overrides the default
 
 Environment Overrides (Koanf)
 - Prefix: `CFG_`
@@ -33,15 +31,14 @@ database:
   url: postgres://...
   max_conns: 50
   min_conns: 0
-otel:
-  endpoint: otel-collector:4317
-  service_name: grpc-buf
 security:
   jwt_secret: "..."
+  jwt_issuer: grpc-buf
+  jwt_audience: grpc-buf
+  auth_skip_suffixes: ["/RegisterUser", "/LoginUser"]
 ```
 
 Validation
 - In production:
   - `database.url` and `security.jwt_secret` are required.
 - `server.port` must be 1-65535.
-

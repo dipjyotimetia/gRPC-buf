@@ -5,15 +5,12 @@ services:
       dockerfile: Dockerfile
     container_name: api
     depends_on:
-      - postgres
-      - otel-collector
+      postgres:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
-      - ENVIRONMENT=dev
-      - PORT=8080
-      - OTEL_SERVICE_NAME=grpc-buf
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/grpcbuf?sslmode=disable
+      - CONFIG_PATH=/app/config/local.yaml
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -28,6 +25,12 @@ services:
       POSTGRES_DB: grpcbuf
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d grpcbuf"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
 
   pgadmin:
     container_name: pgadmin
@@ -44,24 +47,6 @@ services:
       - pgadmin-data:/var/lib/pgadmin
     profiles:
       - debug  
-
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.120.0
-    depends_on:
-      - jaeger
-    command: ["--config=/etc/otel-collector.yaml"]
-    volumes:
-      - ./otel-collector.yaml:/etc/otel-collector.yaml
-    ports:
-      - 4317:4317
-
-  jaeger:
-    image: jaegertracing/all-in-one:1.66.0
-    container_name: jaeger
-    ports:
-      - "16686:16686"  # Web UI
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
 
 volumes:
   postgres-data:
