@@ -21,6 +21,7 @@ jobs:
       DOCKER_BUILDKIT: 1
       PROJECT_ID: ${{ secrets.PROJECT_ID }}
       PROJECT_NUMBER: ${{ secrets.GCP_PROJECT_NUMBER }}
+      RUNTIME_SA_EMAIL: ${{ secrets.RUNTIME_SA_EMAIL }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -49,8 +50,8 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          IMAGE=${AR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${GITHUB_REPO}:$GITHUB_SHA
-          gcloud run deploy ${SERVICE_NAME:-my-service} \
+          IMAGE=${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE}:$GITHUB_SHA
+          gcloud run deploy ${SERVICE} \
             --image="$IMAGE" \
             --region=${REGION} \
             --service-account=${RUNTIME_SA_EMAIL} \
