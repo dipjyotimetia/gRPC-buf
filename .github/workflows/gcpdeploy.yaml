@@ -3,9 +3,13 @@ name: Deploy
 on:
   push:
     branches: [ main ]
+
 env:
   SERVICE: grpc-buf
   REGION: australia-southeast2
+  AR_REGION: australia-southeast2
+  AR_REPO: grpc-buf
+
 jobs:
   deploy:
     name: Deploy
@@ -15,22 +19,33 @@ jobs:
       id-token: 'write'
     env:
       DOCKER_BUILDKIT: 1
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - id: 'auth'
-        name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v3'
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           create_credentials_file: true
-          workload_identity_provider: '${{ secrets.GCP_WIF_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SA_EMAIL }}'
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
 
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v3'
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
       
+      - name: Configure Artifact Registry Docker auth
+        run: gcloud auth configure-docker "${AR_REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE="${AR_REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE}:${GITHUB_SHA}"
+          echo "IMAGE=${IMAGE}" >> "$GITHUB_ENV"
+          docker build -t "${IMAGE}" .
+          docker push "${IMAGE}"
+
       - name: Load secrets from Secret Manager
         id: secrets
         uses: google-github-actions/get-secretmanager-secrets@v3
@@ -39,7 +54,7 @@ jobs:
           secrets: |
             DATABASE_URL:projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/DATABASE_URL/versions/latest
             JWT_SECRET:projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/JWT_SECRET/versions/latest
-      
+
       - name: Make deploy script executable
         run: chmod +x scripts/deploy_local.sh
 
@@ -49,5 +64,6 @@ jobs:
           ENVIRONMENT: prod
           SERVICE: ${{ env.SERVICE }}
           REGION: ${{ env.REGION }}
+          IMAGE: ${{ env.IMAGE }}
           DATABASE_URL: ${{ env.DATABASE_URL }}
           JWT_SECRET: ${{ env.JWT_SECRET }}
