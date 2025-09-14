@@ -20,6 +20,7 @@ jobs:
     env:
       DOCKER_BUILDKIT: 1
       PROJECT_ID: ${{ secrets.PROJECT_ID }}
+      PROJECT_NUMBER: ${{ secrets.GCP_PROJECT_NUMBER }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -54,5 +55,5 @@ jobs:
             --region=${REGION} \
             --service-account=${RUNTIME_SA_EMAIL} \
             --allow-unauthenticated \
-            --set-secrets="DATABASE_URL=projects/${GCP_PROJECT_NUMBER}/secrets/${DATABASE_URL}:latest,JWT_SECRET=projects/${GCP_PROJECT_NUMBER}/secrets/JWT_SECRET:latest" \
+            --set-secrets="DATABASE_URL=projects/${PROJECT_NUMBER}/secrets/${DATABASE_URL}:latest,JWT_SECRET=projects/${PROJECT_NUMBER}/secrets/JWT_SECRET:latest" \
             --set-env-vars "ENVIRONMENT=production"
