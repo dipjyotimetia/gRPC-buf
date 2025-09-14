@@ -28,24 +28,29 @@ jobs:
           workload_identity_provider: '${{ secrets.GCP_WIF_PROVIDER }}'
           service_account: '${{ secrets.GCP_SA_EMAIL }}'
 
-      - name: Deploy to Cloud Run
-        id: deploy
-        uses: 'google-github-actions/deploy-cloudrun@v3'
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v3'
+
+      - name: 'Use gcloud CLI'
+        run: 'gcloud info'
+      
+      - name: Load secrets from Secret Manager
+        id: secrets
+        uses: google-github-actions/get-secretmanager-secrets@v3
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service: ${{ env.SERVICE }}
-          region: ${{ env.REGION }}
-          source: '.'
-          env_vars: |
-            ENVIRONMENT=prod
+          export_to_environment: true
           secrets: |
-            DATABASE_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/DATABASE_URL/versions/latest
-            JWT_SECRET=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/JWT_SECRET/versions/latest
-          flags: >-
-            --use-http2
-            --allow-unauthenticated
-            --concurrency=80
-            --cpu=1
-            --memory=256Mi
-            --max-instances=1
-            --cpu-throttling
+            DATABASE_URL:projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/DATABASE_URL/versions/latest
+            JWT_SECRET:projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/JWT_SECRET/versions/latest
+      
+      - name: Make deploy script executable
+        run: chmod +x scripts/deploy_local.sh
+
+      - name: Deploy via script
+        run: ./scripts/deploy_local.sh
+        env:
+          ENVIRONMENT: prod
+          SERVICE: ${{ env.SERVICE }}
+          REGION: ${{ env.REGION }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          JWT_SECRET: ${{ env.JWT_SECRET }}

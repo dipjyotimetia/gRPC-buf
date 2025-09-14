@@ -36,4 +36,8 @@ Troubleshooting
 - DB connection failures:
   - Ensure `DATABASE_URL` is valid and Postgres is reachable.
   - Check pool limits (`database.max_conns/min_conns`).
+  - If deploying to Cloud Run and you see hostname resolving errors like `lookup postgres: no such host`,
+    verify your `DATABASE_URL` doesn't reference the docker-compose hostname `postgres`.
+    That hostname only works inside `docker compose` networks. Use a reachable host such as a Cloud SQL
+    private/public IP or DNS name. Example: `postgres://USER:PASS@127.0.0.1:5432/DB?sslmode=require` (replace host appropriately).
  
