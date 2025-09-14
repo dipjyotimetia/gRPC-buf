@@ -34,7 +34,7 @@
 #   UPDATE_CLOUD_RUN      # default: false (update Cloud Run service account)
 #
 # Usage:
-export PROJECT_ID=
+export PROJECT_ID=dev-aileron-214211
 export REGION=australia-southeast2
 export GITHUB_OWNER=dipjyotimetia
 export GITHUB_REPO=grpc-buf
@@ -79,7 +79,7 @@ fi
 
 POOL_FULL="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}"
 PROVIDER_FULL="${POOL_FULL}/providers/${PROVIDER_ID}"
-
+AUD_EXPECTED="https://iam.googleapis.com/${PROVIDER_FULL}"
 DEPLOYER_SA_EMAIL="${DEPLOYER_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 RUNTIME_SA_EMAIL="${RUNTIME_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
@@ -113,11 +113,18 @@ if ! gcloud iam workload-identity-pools providers describe "${PROVIDER_ID}" \
     --project="${PROJECT_ID}" \
     --display-name="GitHub Actions OIDC" \
     --issuer-uri="https://token.actions.githubusercontent.com" \
-    --allowed-audiences="${PROVIDER_FULL}" \
-    --attribute-condition="assertion.repository_owner=='${GITHUB_OWNER}' && assertion.ref=='refs/heads/main'" \
+    --allowed-audiences="${AUD_EXPECTED}" \
+    --attribute-condition="assertion.repository_owner=='${GITHUB_OWNER}' && assertion.ref=='${ALLOWED_REF}'" \
     --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner,attribute.ref=assertion.ref,attribute.actor=assertion.actor,attribute.aud=assertion.aud,attribute.job_workflow_ref=assertion.job_workflow_ref"
 else
   echo "    Provider exists: ${PROVIDER_ID}"
+  # Ensure provider settings are correct (idempotent)
+  gcloud iam workload-identity-pools providers update-oidc "${PROVIDER_ID}" \
+    --location=global \
+    --workload-identity-pool="${POOL_ID}" \
+    --project="${PROJECT_ID}" \
+    --allowed-audiences="${AUD_EXPECTED}" \
+    --attribute-condition="assertion.repository_owner=='${GITHUB_OWNER}' && assertion.ref=='${ALLOWED_REF}'" >/dev/null
 fi
 
 echo "==> Creating service accounts if missing..."
@@ -208,7 +215,7 @@ COND_TITLE="github-branch"
 COND_DESC="Allow GitHub Actions from ${GITHUB_REPO_FULL} on ${ALLOWED_REF}"
 
 # Expression requires escaped quotes
-COND_EXPR="attribute.repository=='${GITHUB_REPO_FULL}' && attribute.ref=='${ALLOWED_REF}' && attribute.aud=='${PROVIDER_FULL}'"
+COND_EXPR="attribute.repository=='${GITHUB_REPO_FULL}' && attribute.ref=='${ALLOWED_REF}' && attribute.aud=='${AUD_EXPECTED}'"
 
 set +e
 gcloud iam service-accounts add-iam-policy-binding "${DEPLOYER_SA_EMAIL}" \
