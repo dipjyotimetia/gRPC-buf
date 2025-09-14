@@ -37,7 +37,7 @@
 export PROJECT_ID=dev-aileron-214211
 export REGION=australia-southeast2
 export GITHUB_OWNER=dipjyotimetia
-export GITHUB_REPO=grpc-buf
+export GITHUB_REPO=gRPC-buf
 export SERVICE_NAME=grpc-buf
 export SECRET_IDS="DATABASE_URL,JWT_SECRET"
 export AR_REPO=grpc-buf
