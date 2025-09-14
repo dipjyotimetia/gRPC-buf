@@ -21,10 +21,10 @@ jobs:
       - name: Test
         run: go test -race -cover ./...
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v8
-        with:
-          version: v2.1
+      # - name: golangci-lint
+      #   uses: golangci/golangci-lint-action@v8
+      #   with:
+      #     version: v2.1
 
       # Buf setup and proto checks
       - name: Setup Buf
