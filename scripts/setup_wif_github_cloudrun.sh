@@ -215,7 +215,7 @@ COND_TITLE="github-branch"
 COND_DESC="Allow GitHub Actions from ${GITHUB_REPO_FULL} on ${ALLOWED_REF}"
 
 # Expression requires escaped quotes
-COND_EXPR="attribute.repository=='${GITHUB_REPO_FULL}' && attribute.ref=='${ALLOWED_REF}' && attribute.aud=='${AUD_EXPECTED}'"
+COND_EXPR="attribute.repository=='${GITHUB_REPO_FULL}' && attribute.ref=='${ALLOWED_REF}'"
 
 set +e
 gcloud iam service-accounts add-iam-policy-binding "${DEPLOYER_SA_EMAIL}" \
