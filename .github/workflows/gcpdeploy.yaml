@@ -55,5 +55,5 @@ jobs:
             --region=${REGION} \
             --service-account=${RUNTIME_SA_EMAIL} \
             --allow-unauthenticated \
-            --set-secrets="DATABASE_URL=projects/${PROJECT_NUMBER}/secrets/${DATABASE_URL}:latest,JWT_SECRET=projects/${PROJECT_NUMBER}/secrets/JWT_SECRET:latest" \
+            --set-secrets="DATABASE_URL=projects/${PROJECT_NUMBER}/secrets/DATABASE_URL:latest,JWT_SECRET=projects/${PROJECT_NUMBER}/secrets/JWT_SECRET:latest" \
             --set-env-vars "ENVIRONMENT=production"
