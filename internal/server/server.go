@@ -141,6 +141,10 @@ func newCORS(cfg *config.Config) *cors.Cors {
     env := ""
     if cfg != nil { env = strings.ToLower(strings.TrimSpace(cfg.Environment)) }
     allowAll := env == "dev" && len(origins) == 0
+    // Treat literal "*" as allow-all in any env.
+    if slices.Contains(origins, "*") {
+        allowAll = true
+    }
 
 	return cors.New(cors.Options{
 		AllowedMethods: []string{
@@ -151,12 +155,12 @@ func newCORS(cfg *config.Config) *cors.Cors {
 			http.MethodPatch,
 			http.MethodDelete,
 		},
-		AllowOriginFunc: func(origin string) bool {
-			if allowAll {
-				return true
-			}
-			return slices.Contains(origins, origin)
-		},
+        AllowOriginFunc: func(origin string) bool {
+            if allowAll {
+                return true
+            }
+            return slices.Contains(origins, origin)
+        },
 		AllowedHeaders: []string{"*"},
 		ExposedHeaders: []string{
 			"Accept",

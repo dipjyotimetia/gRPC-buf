@@ -53,7 +53,7 @@ Components
 - Connect Handlers: `internal/transport/http/handler.go` wires service implementations to HTTP mux; also serves health and reflection.
 - Service Layer: `internal/service` provides interfaces; implementations delegate to the datastore.
 - Datastore (pgx pool): `internal/postgres` with embedded migrations and query methods.
-- Configuration: `internal/config` (Koanf) loads YAML + env overrides and exports envs for compatibility.
+- Configuration: `internal/config` (envconfig) loads YAML + env overrides.
 - Auth & Rate Limit: `internal/security` and `internal/transport/middleware/*`.
 
 Data Model (partial)

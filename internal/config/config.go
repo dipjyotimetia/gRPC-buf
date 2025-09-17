@@ -7,67 +7,79 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/knadh/koanf/parsers/yaml"
-	"github.com/knadh/koanf/providers/env"
-	"github.com/knadh/koanf/providers/file"
-	kfn "github.com/knadh/koanf/v2"
+	"github.com/kelseyhightower/envconfig"
+	"gopkg.in/yaml.v3"
 )
 
 type ServerConfig struct {
-	Port               int      `yaml:"port"`
-	CORSAllowedOrigins []string `yaml:"cors_allowed_origins"`
-	RunMigrations      bool     `yaml:"run_migrations"`
-	LogLevel           string   `yaml:"log_level"`
-	LoginRPS           int      `yaml:"login_rps"`
-	LoginBurst         int      `yaml:"login_burst"`
+	Port               int      `yaml:"port" envconfig:"PORT"`
+	CORSAllowedOrigins []string `yaml:"cors_allowed_origins" envconfig:"CORS_ALLOWED_ORIGINS"`
+	RunMigrations      bool     `yaml:"run_migrations" envconfig:"RUN_MIGRATIONS"`
+	LogLevel           string   `yaml:"log_level" envconfig:"LOG_LEVEL"`
+	LoginRPS           int      `yaml:"login_rps" envconfig:"LOGIN_RPS"`
+	LoginBurst         int      `yaml:"login_burst" envconfig:"LOGIN_BURST"`
 }
 
 type DatabaseConfig struct {
-	URL            string `yaml:"url"`
-	MaxConns       int    `yaml:"max_conns"`
-	MinConns       int    `yaml:"min_conns"`
-	ConnectTimeout string `yaml:"connect_timeout"`
+	URL            string `yaml:"url" envconfig:"URL"`
+	MaxConns       int    `yaml:"max_conns" envconfig:"MAX_CONNS"`
+	MinConns       int    `yaml:"min_conns" envconfig:"MIN_CONNS"`
+	ConnectTimeout string `yaml:"connect_timeout" envconfig:"CONNECT_TIMEOUT"`
 }
 
 type SecurityConfig struct {
-	JWTSecret        string   `yaml:"jwt_secret"`
-	JWTIssuer        string   `yaml:"jwt_issuer"`
-	JWTAudience      string   `yaml:"jwt_audience"`
-	AuthSkipSuffixes []string `yaml:"auth_skip_suffixes"`
+	JWTSecret        string   `yaml:"jwt_secret" envconfig:"JWT_SECRET"`
+	JWTIssuer        string   `yaml:"jwt_issuer" envconfig:"JWT_ISSUER"`
+	JWTAudience      string   `yaml:"jwt_audience" envconfig:"JWT_AUDIENCE"`
+	AuthSkipSuffixes []string `yaml:"auth_skip_suffixes" envconfig:"AUTH_SKIP_SUFFIXES"`
 }
 
 type Config struct {
-	Environment string         `yaml:"environment"`
-	Server      ServerConfig   `yaml:"server"`
-	Database    DatabaseConfig `yaml:"database"`
-	Security    SecurityConfig `yaml:"security"`
+	Environment string         `yaml:"environment" envconfig:"ENVIRONMENT"`
+	Server      ServerConfig   `yaml:"server" envconfig:"SERVER"`
+	Database    DatabaseConfig `yaml:"database" envconfig:"DATABASE"`
+	Security    SecurityConfig `yaml:"security" envconfig:"SECURITY"`
 }
 
-// Load reads the YAML config file at path and applies env overrides via koanf.
-// Env overrides use the prefix CFG_ and double underscore (__) to denote nesting.
-// Example: CFG_SERVER__PORT=9090 overrides server.port.
+// Load hydrates configuration from an optional YAML file and environment variables.
+// Env overrides use either direct names (e.g. SERVER_PORT) or the CFG_ prefix
+// (e.g. CFG_SERVER_PORT). Environment values take precedence over file contents.
 func Load(path string) (*Config, error) {
-	k := kfn.New(".")
-	if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
-		return nil, fmt.Errorf("load config file: %w", err)
+	cfg := Config{
+		Environment: "dev",
+		Server: ServerConfig{
+			Port:          8080,
+			RunMigrations: true,
+			LogLevel:      "info",
+			LoginRPS:      5,
+			LoginBurst:    10,
+		},
+		Database: DatabaseConfig{
+			ConnectTimeout: "60s",
+		},
+		Security: SecurityConfig{
+			AuthSkipSuffixes: []string{"/RegisterUser", "/LoginUser"},
+		},
 	}
-	// Env overrides with prefix CFG_. Replace __ with . for nested keys.
-	if err := k.Load(env.Provider("CFG_", ".", func(s string) string {
-		s = strings.TrimPrefix(s, "CFG_")
-		s = strings.ReplaceAll(s, "__", ".")
-		return strings.ToLower(s)
-	}), nil); err != nil {
-		return nil, fmt.Errorf("load env overrides: %w", err)
+	if strings.TrimSpace(path) != "" {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("read config file: %w", err)
+		}
+		if err := yaml.Unmarshal(data, &cfg); err != nil {
+			return nil, fmt.Errorf("unmarshal config file: %w", err)
+		}
 	}
-
-	var c Config
-	if err := k.Unmarshal("", &c); err != nil {
-		return nil, fmt.Errorf("unmarshal config: %w", err)
+	// Apply defaults & environment overrides via envconfig; allow either CFG_* or direct names.
+	if err := envconfig.Process("", &cfg); err != nil {
+		return nil, fmt.Errorf("load env config: %w", err)
 	}
-	// Best-effort env interpolation for secret fields
-	c.Database.URL = os.ExpandEnv(c.Database.URL)
-	c.Security.JWTSecret = os.ExpandEnv(c.Security.JWTSecret)
-	return &c, nil
+	if err := envconfig.Process("CFG", &cfg); err != nil {
+		return nil, fmt.Errorf("load cfg env overrides: %w", err)
+	}
+	cfg.Database.URL = os.ExpandEnv(cfg.Database.URL)
+	cfg.Security.JWTSecret = os.ExpandEnv(cfg.Security.JWTSecret)
+	return &cfg, nil
 }
 
 // Validate checks the configuration and returns an error if required fields are missing
@@ -116,50 +128,4 @@ func ResolvePath() (string, error) {
 	}
 }
 
-// ApplyEnv exports configuration as environment variables, so existing code can consume it.
-func (c *Config) ApplyEnv() error {
-	if c == nil {
-		return errors.New("nil config")
-	}
-	set := func(k, v string) { _ = os.Setenv(k, v) }
-
-	set("ENVIRONMENT", c.Environment)
-	if c.Server.Port != 0 {
-		set("PORT", fmt.Sprintf("%d", c.Server.Port))
-	}
-	if len(c.Server.CORSAllowedOrigins) > 0 {
-		set("CORS_ALLOWED_ORIGINS", strings.Join(c.Server.CORSAllowedOrigins, ","))
-	}
-	if c.Server.RunMigrations {
-		set("RUN_MIGRATIONS", "true")
-	} else {
-		set("RUN_MIGRATIONS", "false")
-	}
-
-	if c.Database.URL != "" {
-		set("DATABASE_URL", c.Database.URL)
-	}
-	if c.Database.MaxConns > 0 {
-		set("DB_MAX_CONNS", fmt.Sprintf("%d", c.Database.MaxConns))
-	}
-	if c.Database.MinConns >= 0 {
-		set("DB_MIN_CONNS", fmt.Sprintf("%d", c.Database.MinConns))
-	}
-
-	if c.Security.JWTSecret != "" {
-		set("JWT_SECRET", c.Security.JWTSecret)
-	}
-	if c.Security.JWTIssuer != "" {
-		set("JWT_ISSUER", c.Security.JWTIssuer)
-	}
-	if c.Security.JWTAudience != "" {
-		set("JWT_AUDIENCE", c.Security.JWTAudience)
-	}
-	if len(c.Security.AuthSkipSuffixes) > 0 {
-		set("AUTH_SKIP_SUFFIXES", strings.Join(c.Security.AuthSkipSuffixes, ","))
-	}
-	if c.Server.LogLevel != "" {
-		set("LOG_LEVEL", strings.ToLower(c.Server.LogLevel))
-	}
-	return nil
-}
+// (env-only export helper was removed as unused)

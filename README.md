@@ -7,7 +7,7 @@ A modern Golang service template featuring dual protocol APIs (gRPC/REST) using 
 
 ## Overview
 
-gRPC-buf is a lean, production-friendly service starter with:
+gRPC-buf is a lean, production-friendly service with:
 
 - Dual protocol APIs via Connect (REST + gRPC on one port)
 - PostgreSQL integration with embedded migrations
@@ -79,12 +79,17 @@ Configuration files:
   - `config/production.yaml` (example for prod; secrets via environment interpolation if desired)
 - Override file path with `CONFIG_PATH=/path/to/config.yaml`.
 
-Advanced overrides (Koanf):
-- You can override any YAML key via environment variables using the `CFG_` prefix and `__` as a nesting separator.
+Advanced overrides (envconfig):
+- Override any YAML key via environment variables. Preferred names mirror the struct hierarchy: `SERVER_PORT`, `DATABASE_URL`, etc.
+- Legacy names with the `CFG_` prefix still work (e.g., `CFG_SERVER_PORT`).
 - Examples:
-  - `CFG_SERVER__PORT=9090` overrides `server.port`.
-  - `CFG_DATABASE__MAX_CONNS=200` overrides `database.max_conns`.
-  - `CFG_SERVER__LOG_LEVEL=debug` sets the log level.
+  - `SERVER_PORT=9090` overrides `server.port`.
+  - `CFG_DATABASE_MAX_CONNS=200` overrides `database.max_conns`.
+  - `CFG_SERVER_LOG_LEVEL=debug` remains supported for backward compatibility.
+
+Notes:
+- Database pool sizing: Prefer `DATABASE_MAX_CONNS`/`DATABASE_MIN_CONNS`. Legacy `DB_MAX_CONNS`/`DB_MIN_CONNS` are still recognized.
+- CORS: In dev, an empty list allows all. In any env, adding `"*"` to `server.cors_allowed_origins` allows all.
 
 ## Common Development Commands
 
@@ -107,7 +112,7 @@ Advanced overrides (Koanf):
 │   └── api/                # Service binary
 │       └── main.go         # Main
 ├── internal/               # Private application code
-│   ├── config/             # Config loading & env export (Koanf)
+│   ├── config/             # Config loading & env export (envconfig)
 │   ├── gen/proto/          # Generated protocol buffer code
 │   ├── postgres/           # Database access layer + migrations
 │   ├── security/           # JWT verification

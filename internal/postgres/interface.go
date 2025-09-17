@@ -44,16 +44,16 @@ type Store struct {
 
 // NewDatabaseConnection creates a new PostgreSQL connection pool (env-based for backward compatibility)
 func NewDatabaseConnection() DataStore {
-	cfg := &config.Config{
-		Environment: os.Getenv("ENVIRONMENT"),
-		Database: config.DatabaseConfig{
-			URL:      os.Getenv("DATABASE_URL"),
-			MaxConns: int(mustAtoi(os.Getenv("DB_MAX_CONNS"), 50)),
-			MinConns: int(mustAtoi(os.Getenv("DB_MIN_CONNS"), 0)),
-		},
-		Server: config.ServerConfig{RunMigrations: os.Getenv("RUN_MIGRATIONS") != "false"},
-	}
-	return NewDatabaseConnectionFromConfig(cfg)
+    cfg := &config.Config{
+        Environment: os.Getenv("ENVIRONMENT"),
+        Database: config.DatabaseConfig{
+            URL:      os.Getenv("DATABASE_URL"),
+            MaxConns: int(mustAtoi(envOr("DATABASE_MAX_CONNS", "DB_MAX_CONNS"), 50)),
+            MinConns: int(mustAtoi(envOr("DATABASE_MIN_CONNS", "DB_MIN_CONNS"), 0)),
+        },
+        Server: config.ServerConfig{RunMigrations: os.Getenv("RUN_MIGRATIONS") != "false"},
+    }
+    return NewDatabaseConnectionFromConfig(cfg)
 }
 
 // NewDatabaseConnectionFromConfig creates a PostgreSQL pool using the provided config.
@@ -145,6 +145,15 @@ func mustAtoi(s string, def int) int64 {
 		return int64(def)
 	}
 	return n
+}
+
+func envOr(keys ...string) string {
+    for _, k := range keys {
+        if v := os.Getenv(k); v != "" {
+            return v
+        }
+    }
+    return ""
 }
 
 // Close closes the database connection pool
