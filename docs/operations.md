@@ -30,7 +30,12 @@ Security
 
 Deploy
 - Docker: `docker build -t <image> .`
-- Cloud Run: see `.github/workflows/gcpdeploy.yaml`. Provide configuration via `CONFIG_PATH` or bake config into image. Provide secrets (e.g., `DATABASE_URL`, `JWT_SECRET`) via Secret Manager/env.
+- Cloud Run: see `.github/workflows/gcpdeploy.yaml`. Provide configuration via `CONFIG_PATH` or bake config into image. Provide secrets (e.g., `DATABASE_URL`, `JWT_SECRET`) via Secret Manager/env. The service reads `PORT` from the environment.
+
+Production
+- The API binary fails fast in `ENVIRONMENT=prod` if configuration cannot be loaded or validated. Ensure either:
+  - a valid `CONFIG_PATH` is provided, or
+  - all required env vars are set (e.g., `DATABASE_URL`, `SECURITY_JWT_SECRET`).
 
 Troubleshooting
 - DB connection failures:

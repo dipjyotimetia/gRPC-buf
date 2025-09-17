@@ -23,7 +23,13 @@ func main() {
         logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: lvl, AddSource: true}))
         slog.SetDefault(logger)
     } else {
-        // If config fails to load, continue with env fallback for dev only but warn
+        // In production, fail fast if config cannot be loaded
+        env := strings.ToLower(strings.TrimSpace(os.Getenv("ENVIRONMENT")))
+        if env == "prod" || env == "production" {
+            slog.Error("failed to load configuration in production", "error", err)
+            os.Exit(1)
+        }
+        // Dev: proceed with environment-only fallback
         slog.Warn("could not load config file; proceeding with environment only", "error", err)
         lvl := parseLevel(os.Getenv("LOG_LEVEL"))
         logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: lvl, AddSource: true}))

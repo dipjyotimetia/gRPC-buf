@@ -1,6 +1,6 @@
 # Configuration
 
-Configuration is managed with Koanf, merging YAML files and environment variable overrides.
+Configuration is managed with [`envconfig`](https://github.com/kelseyhightower/envconfig), layering environment variables on top of optional YAML files.
 
 Files
 - `config/local.yaml`: defaults for local dev
@@ -11,12 +11,20 @@ Resolution
   - default: `config/local.yaml`
   - `CONFIG_PATH=/path/to/config.yaml` overrides the default
 
-Environment Overrides (Koanf)
-- Prefix: `CFG_`
-- Separator: `__` (double underscore) for nesting
+Environment Overrides
+- Preferred: match the struct hierarchy directly, e.g. `SERVER_PORT`, `DATABASE_URL`, `SECURITY_JWT_SECRET`.
+- Legacy: the `CFG_` prefix still works (`CFG_SERVER_PORT` maps to `server.port`).
 - Examples:
-  - `CFG_SERVER__PORT=9090` → `server.port`
-  - `CFG_DATABASE__MAX_CONNS=200` → `database.max_conns`
+  - `SERVER_PORT=9090` → `server.port`
+  - `CFG_DATABASE_MAX_CONNS=200` → `database.max_conns`
+
+Connection Pool Env Names
+- Preferred: `DATABASE_MAX_CONNS`, `DATABASE_MIN_CONNS`.
+- Legacy supported: `DB_MAX_CONNS`, `DB_MIN_CONNS`.
+
+CORS Allowed Origins
+- Dev: if `server.cors_allowed_origins` is empty, all origins are allowed.
+- Any env: including `"*"` in `server.cors_allowed_origins` allows all origins.
 
 Schema
 

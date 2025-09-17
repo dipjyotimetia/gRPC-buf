@@ -90,7 +90,7 @@ migrate-run-local: ## Run embedded migrations against custom DSN. Usage: make mi
 	case "$$dsn" in \
 		postgresql://*) echo "[migrate-run-local] Normalizing DSN scheme postgresql:// -> postgres://"; dsn="$${dsn#postgresql://}"; dsn="postgres://$${dsn}";; \
 	esac; \
-	CONFIG_PATH=config/local.yaml CFG_DATABASE__URL="$$dsn" $(GO) run ./cmd/migrate
+	CONFIG_PATH=config/local.yaml CFG_DATABASE_URL="$$dsn" $(GO) run ./cmd/migrate
 
 .PHONY: buf golangci-lint protoc-gen-go protoc-gen-go-grpc
 
