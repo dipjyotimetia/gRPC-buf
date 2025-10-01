@@ -38,6 +38,8 @@ func TestPayment(t *testing.T) {
 	res, err := client.MakePayment(context.Background(), req)
 	if err != nil {
 		slog.Error(err.Error())
+		t.Errorf("MakePayment failed: %v", err)
+		return
 	}
 	fmt.Println(res.Msg)
 }

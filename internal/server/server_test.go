@@ -7,6 +7,7 @@ import (
     "context"
     "net/http"
     "net/http/httptest"
+    "os"
     "testing"
     "time"
 
@@ -23,6 +24,12 @@ import (
 
 func TestElizaServer(t *testing.T) {
     t.Parallel()
+
+    // Skip if DATABASE_URL is not set (e.g., when testing against docker-compose API)
+    if os.Getenv("DATABASE_URL") == "" {
+        t.Skip("Skipping test: DATABASE_URL not set")
+    }
+
     var (
         db             = postgres.NewDatabaseConnection()
         paymentService = service.NewPaymentService(db)

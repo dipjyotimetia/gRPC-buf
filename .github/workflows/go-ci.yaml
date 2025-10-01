@@ -50,5 +50,10 @@ jobs:
         with:
           against: 'https://github.com/dipjyotimetia/gRPC-buf.git#branch=main,ref=HEAD~1,subdir=proto'
 
+      - name: Install protoc generators
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
+
       - name: Generate Protobufs
         run: buf generate
