@@ -1,6 +1,6 @@
 # gRPC-buf
 
-A modern Golang service template featuring dual protocol APIs (gRPC/REST) using Connect, with PostgreSQL persistence and production-focused defaults.
+A modern Golang service featuring dual protocol APIs (gRPC/REST) using Connect, with PostgreSQL persistence and production-focused defaults.
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/dipjyotimetia/gRPC-buf)](go.mod)
 [![License](https://img.shields.io/github/license/dipjyotimetia/gRPC-buf)](LICENSE)
@@ -195,16 +195,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License.
-Migrations (local)
-- Using embedded migrator with custom connection:
-  - `make migrate-run-local DSN=postgres://user:pass@localhost:5432/grpcbuf?sslmode=disable`
-- Using external migrator (requires migrate CLI):
-  - `make migrate-up DSN=postgres://...`
-  - `make migrate-down DSN=postgres://...`
-Using .env for local dev
-- Copy `.env.example` to `.env` and adjust values.
-- The Makefile auto-loads `.env` when present.
-- Example:
-  - `CONFIG_PATH=./config/local.yaml`
-  - `DATABASE_URL=postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable`
-  - `JWT_SECRET=change-me`
