@@ -1,0 +1,25 @@
+FROM golang:1.25 AS builder
+
+ENV CGO_ENABLED=0
+ENV GO111MODULE=on
+
+WORKDIR /src
+
+COPY go.* ./
+RUN go mod download
+
+COPY . .
+
+ARG VERSION=unknown
+ARG COMMIT=unknown
+ARG DATE=unknown
+
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w -X github.com/grpc-buf/internal/version.Version=${VERSION} -X github.com/grpc-buf/internal/version.Commit=${COMMIT} -X github.com/grpc-buf/internal/version.Date=${DATE}" -o /out/mcp-server ./cmd/mcp-server
+
+FROM gcr.io/distroless/base-debian12
+WORKDIR /app
+USER 65532:65532
+COPY --from=builder /out/mcp-server /app/mcp-server
+# Copy configs so container can run with CONFIG_PATH
+COPY --from=builder /src/config /app/config
+ENTRYPOINT ["/app/mcp-server"]

@@ -7,8 +7,8 @@
 package paymentv1
 
 import (
-	_ "github.com/grpc-buf/internal/gen/proto/google/api"
-	_type "github.com/grpc-buf/internal/gen/proto/google/type"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
+	money "google.golang.org/genproto/googleapis/type/money"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -134,7 +134,7 @@ type Invoice struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                                     // Unique identifier for the invoice
 	InvoiceName   string                 `protobuf:"bytes,2,opt,name=invoice_name,json=invoiceName,proto3" json:"invoice_name,omitempty"` // Invoice name
-	Amount        *_type.Money           `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`                              // Invoice amount
+	Amount        *money.Money           `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`                              // Invoice amount
 	Paid          bool                   `protobuf:"varint,4,opt,name=paid,proto3" json:"paid,omitempty"`                                 // Indicates if the invoice is paid
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -184,7 +184,7 @@ func (x *Invoice) GetInvoiceName() string {
 	return ""
 }
 
-func (x *Invoice) GetAmount() *_type.Money {
+func (x *Invoice) GetAmount() *money.Money {
 	if x != nil {
 		return x.Amount
 	}
@@ -431,7 +431,7 @@ var file_payment_payment_api_proto_goTypes = []any{
 	(*PaymentRequest)(nil),        // 3: rpc.payment.v1.PaymentRequest
 	(*PaymentResponse)(nil),       // 4: rpc.payment.v1.PaymentResponse
 	(*Empty)(nil),                 // 5: rpc.payment.v1.Empty
-	(*_type.Money)(nil),           // 6: google.type.Money
+	(*money.Money)(nil),           // 6: google.type.Money
 	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
 }
 var file_payment_payment_api_proto_depIdxs = []int32{

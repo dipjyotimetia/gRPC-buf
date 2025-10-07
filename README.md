@@ -18,8 +18,9 @@ gRPC-buf is a lean, production-friendly service with:
 
 ## Features
 
-### What’s Included
+### What's Included
 - Connect handlers for REST and gRPC
+- MCP (Model Context Protocol) server for AI/LLM integration
 - Buf-based generation and linting
 - Integration tests (Docker compose-based)
 - Makefile tasks (build, test, lint, migrations)
@@ -103,22 +104,73 @@ Notes:
 | `make migrate-down` | Roll back database migrations |
 | `make migrate-run` | Run embedded migrations via Go |
 | `make migrate-run-local DSN=postgres://...` | Run embedded migrations against a custom DSN |
+| `make mcp-build` | Build MCP server binary |
+| `make mcp-run` | Run MCP server locally |
+| `make mcp-generate` | Generate MCP stubs from protobuf |
+
+## MCP Server
+
+The project includes an MCP (Model Context Protocol) server that exposes all gRPC services as MCP tools for AI/LLM integration.
+
+### Running the MCP Server
+
+```bash
+# Build the MCP server
+make mcp-build
+
+# Run the MCP server
+make mcp-run
+```
+
+### Available MCP Tools
+
+The MCP server exposes the following services as tools:
+
+- **Expense Service**: `CreateExpense`, `GetExpense`, `ListExpenses`, `UpdateExpense`, `DeleteExpense`
+- **User Service**: `RegisterUser`, `LoginUser`
+- **Payment Service**: `MakePayment`, `MarkInvoicePaid`, `PayInvoice`
+
+### Using with MCP Clients
+
+The MCP server uses stdio transport by default, making it compatible with MCP-enabled clients:
+
+```json
+{
+  "mcpServers": {
+    "grpc-buf": {
+      "command": "/path/to/bin/mcp-server",
+      "env": {
+        "DATABASE_URL": "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable",
+        "CONFIG_PATH": "./config/local.yaml"
+      }
+    }
+  }
+}
+```
 
 ## Project Structure
 
 ```
 .
 ├── cmd/                    # Application entrypoints
-│   └── api/                # Service binary
-│       └── main.go         # Main
+│   ├── api/                # REST/gRPC service binary
+│   │   └── main.go         # Main
+│   └── mcp-server/         # MCP server binary
+│       └── main.go         # MCP entrypoint
 ├── internal/               # Private application code
 │   ├── config/             # Config loading & env export (envconfig)
 │   ├── gen/proto/          # Generated protocol buffer code
+│   │   ├── expense/        # Expense protos + MCP stubs
+│   │   ├── payment/        # Payment protos + MCP stubs
+│   │   └── registration/   # User protos + MCP stubs
 │   ├── postgres/           # Database access layer + migrations
 │   ├── security/           # JWT verification
 │   ├── server/             # Server lifecycle (listen/shutdown, CORS, h2c)
-│   ├── service/            # Thin service layer delegating to datastore
-│   └── transport/          # HTTP wiring, health, reflection
+│   ├── service/            # Service layer
+│   │   └── mcp/            # MCP adapters for services
+│   └── transport/          # Transport layers
+│       ├── http/           # HTTP wiring, health, reflection
+│       └── mcp/            # MCP server implementation
 ├── proto/              # Protocol buffer definitions
 │   ├── google/         # Google API definitions
 │   ├── payment/        # Payment service definitions

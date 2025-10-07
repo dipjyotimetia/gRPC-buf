@@ -56,40 +56,45 @@ Components
 - Configuration: `internal/config` (envconfig) loads YAML + env overrides.
 - Auth & Rate Limit: `internal/security` and `internal/transport/middleware/*`.
 
-Data Model (partial)
+Services
+- **UserService**: Manages user registration and login.
+- **PaymentService**: Handles payments and invoices.
+- **ExpenseService**: Manages expenses.
+
+Data Model
 
 ```mermaid
 erDiagram
   USERS {
-    uuid id PK
-    text email
-    text password
-    text first_name
-    text last_name
-    timestamptz created_at
-    timestamptz updated_at
-  }
-
-  PAYMENTS {
-    uuid id PK
-    bigint card_no
-    int card_type
-    text name
-    text address
-    real amount
-    timestamptz created_at
+    string id PK
+    string email
+    string password
+    string first_name
+    string last_name
+    timestamp created_at
+    timestamp updated_at
   }
 
   EXPENSES {
-    uuid id PK
-    uuid user_id
-    bigint amount_cents
-    text currency_code
-    text category
-    text description
-    timestamptz created_at
-    timestamptz updated_at
+    string id PK
+    string user_id FK
+    Money amount
+    string category
+    string description
+    timestamp create_time
+    timestamp update_time
   }
+
+  PAYMENTS {
+    int64 card_no PK
+    CardType card
+    string name
+    string address_lines
+    float amount
+    timestamp payment_created
+  }
+
+  USERS ||--o{ EXPENSES : has
 ```
 
 Ports & Protocols

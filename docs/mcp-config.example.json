@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "grpc-buf": {
+      "command": "/path/to/grpc-buf/bin/mcp-server",
+      "env": {
+        "DATABASE_URL": "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable",
+        "CONFIG_PATH": "./config/local.yaml",
+        "LOG_LEVEL": "info"
+      },
+      "description": "gRPC-buf MCP Server - Expense, Payment, and User Management APIs"
+    }
+  }
+}

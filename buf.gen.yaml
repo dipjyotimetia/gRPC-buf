@@ -4,6 +4,27 @@ managed:
   override:
     - file_option: go_package_prefix
       value: github.com/grpc-buf/internal/gen/proto
+    - file_option: go_package
+      path: google/api/annotations.proto
+      value: google.golang.org/genproto/googleapis/api/annotations
+    - file_option: go_package
+      path: google/api/http.proto
+      value: google.golang.org/genproto/googleapis/api/annotations
+    - file_option: go_package
+      path: google/type/money.proto
+      value: google.golang.org/genproto/googleapis/type/money
+    - file_option: go_package
+      path: google/type/date.proto
+      value: google.golang.org/genproto/googleapis/type/date
+    - file_option: go_package
+      path: google/type/datetime.proto
+      value: google.golang.org/genproto/googleapis/type/datetime
+    - file_option: go_package
+      path: google/type/phone_number.proto
+      value: google.golang.org/genproto/googleapis/type/phone_number
+    - file_option: go_package
+      path: google/type/postal_address.proto
+      value: google.golang.org/genproto/googleapis/type/postaladdress
 plugins:
   - local: protoc-gen-go
     out: internal/gen/proto

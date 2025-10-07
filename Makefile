@@ -113,10 +113,60 @@ protoc-gen-connect-go:
 .PHONY: generate
 generate: ## Generate code from protobufs
 	buf generate
+	@echo "Removing generated google API files (using genproto instead)..."
+	rm -rf internal/gen/proto/google
 
 .PHONY: run
 run: ## Run the service locally
 	ENVIRONMENT=dev $(GO) run ./cmd/api
+
+.PHONY: mcp-build
+mcp-build: generate ## Build MCP server binary
+	$(GO) build -o bin/mcp-server ./cmd/mcp-server
+
+.PHONY: mcp-run
+mcp-run: ## Run MCP server locally
+	ENVIRONMENT=dev $(GO) run ./cmd/mcp-server
+
+.PHONY: mcp-generate
+mcp-generate: ## Generate MCP stubs from protobuf
+	buf generate
+	@echo "Removing generated google API files (using genproto instead)..."
+	rm -rf internal/gen/proto/google
+
+.PHONY: docker-up
+docker-up: ## Start all services with docker-compose
+	docker-compose up -d
+
+.PHONY: docker-down
+docker-down: ## Stop all docker-compose services
+	docker-compose down
+
+.PHONY: docker-logs
+docker-logs: ## View logs from all docker-compose services
+	docker-compose logs -f
+
+.PHONY: docker-mcp-logs
+docker-mcp-logs: ## View logs from MCP server
+	docker-compose logs -f mcp-server
+
+.PHONY: docker-build
+docker-build: ## Build docker images
+	docker-compose build
+
+.PHONY: docker-rebuild
+docker-rebuild: ## Rebuild and restart all services
+	docker-compose down
+	docker-compose build
+	docker-compose up -d
+
+.PHONY: docker-mcp-up
+docker-mcp-up: ## Start only MCP server and dependencies
+	docker-compose up -d postgres mcp-server
+
+.PHONY: docker-mcp-restart
+docker-mcp-restart: ## Restart MCP server
+	docker-compose restart mcp-server
 
 .PHONY: setup
 setup: ## Install dev tools

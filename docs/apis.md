@@ -50,21 +50,198 @@ if err != nil { /* handle */ }
 fmt.Println("count:", len(resp.Msg.GetExpenses()))
 ```
 
-User API
-- Register: POST `/v1/user:register` (body: RegisterRequest)
-- Login: POST `/v1/user:login` (body: LoginRequest)
+## User API
 
-Payment API
-- Make: POST `/v1/payment:make` (body: PaymentRequest)
-- Mark Invoice Paid: POST `/v1/invoice:markPaid` (body: Invoice)
-- Pay Invoice: POST `/v1/invoice:pay` (body: Invoice)
+Service: `rpc.user.v1.UserService`
 
-Expense API
-- Create: POST `/v1/expenses` (body: CreateExpenseRequest)
-- Get: GET `/v1/expenses/{id}`
-- List: GET `/v1/expenses?user_id=<uuid>&page_size=<n>&page_token=<token>`
-- Update: PATCH `/v1/expenses/{expense.id}` (body: UpdateExpenseRequest)
-- Delete: DELETE `/v1/expenses/{id}` returns a timestamp
+### RegisterUser
+
+Registers a new user.
+
+- REST: `POST /v1/user:register`
+- gRPC: `rpc.user.v1.UserService/RegisterUser`
+
+**Request:** `rpc.user.v1.RegisterRequest`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `email` | `string` | Required |
+| `password` | `string` | Required |
+| `first_name` | `string` | |
+| `last_name` | `string` | |
+
+**Response:** `rpc.user.v1.RegisterResponse`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `string` | |
+| `created_at` | `google.protobuf.Timestamp` | |
+
+### LoginUser
+
+Logs in a user and returns an access token.
+
+- REST: `POST /v1/user:login`
+- gRPC: `rpc.user.v1.UserService/LoginUser`
+
+**Request:** `rpc.user.v1.LoginRequest`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `email` | `string` | Required |
+| `password` | `string` | Required |
+
+**Response:** `rpc.user.v1.LoginResponse`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `access_token` | `string` | |
+
+## Payment API
+
+Service: `rpc.payment.v1.Payment`
+
+### MakePayment
+
+Processes a payment.
+
+- REST: `POST /v1/payment:make`
+- gRPC: `rpc.payment.v1.Payment/MakePayment`
+
+**Request:** `rpc.payment.v1.PaymentRequest`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `card_no` | `int64` | Card number |
+| `card` | `rpc.payment.v1.CardType` | Card type |
+| `name` | `string` | Card holder's name |
+| `address_lines` | `repeated string` | Card holder's address |
+| `amount` | `float` | Total payment amount |
+| `payment_created` | `google.protobuf.Timestamp` | Timestamp for when the payment was created |
+
+**Response:** `rpc.payment.v1.PaymentResponse`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `status` | `rpc.payment.v1.PaymentStatus` | |
+| `error` | `string` | Payment error message (if any) |
+
+### MarkInvoicePaid
+
+Marks an invoice as paid.
+
+- REST: `POST /v1/invoice:markPaid`
+- gRPC: `rpc.payment.v1.Payment/MarkInvoicePaid`
+
+**Request:** `rpc.payment.v1.Invoice`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `int64` | Unique identifier for the invoice |
+| `invoice_name` | `string` | Invoice name |
+| `amount` | `google.type.Money` | Invoice amount |
+| `paid` | `bool` | Indicates if the invoice is paid |
+
+**Response:** `rpc.payment.v1.Invoice`
+
+### PayInvoice
+
+Pays an invoice.
+
+- REST: `POST /v1/invoice:pay`
+- gRPC: `rpc.payment.v1.Payment/PayInvoice`
+
+**Request:** `rpc.payment.v1.Invoice`
+
+**Response:** `rpc.payment.v1.Invoice`
+
+## Expense API
+
+Service: `rpc.expense.v1.ExpenseService`
+
+### CreateExpense
+
+Creates a new expense.
+
+- REST: `POST /v1/expenses`
+- gRPC: `rpc.expense.v1.ExpenseService/CreateExpense`
+
+**Request:** `rpc.expense.v1.CreateExpenseRequest`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `expense` | `rpc.expense.v1.Expense` | Required: user_id, amount |
+
+**Response:** `rpc.expense.v1.Expense`
+
+### GetExpense
+
+Retrieves an expense by its ID.
+
+- REST: `GET /v1/expenses/{id}`
+- gRPC: `rpc.expense.v1.ExpenseService/GetExpense`
+
+**Request:** `rpc.expense.v1.GetExpenseRequest`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `string` | Required |
+
+**Response:** `rpc.expense.v1.Expense`
+
+### ListExpenses
+
+Lists expenses, with optional filtering by user.
+
+- REST: `GET /v1/expenses`
+- gRPC: `rpc.expense.v1.ExpenseService/ListExpenses`
+
+**Request:** `rpc.expense.v1.ListExpensesRequest`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `user_id` | `string` | Optional filter by user |
+| `page_size` | `int32` | |
+| `page_token` | `string` | |
+
+**Response:** `rpc.expense.v1.ListExpensesResponse`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `expenses` | `repeated rpc.expense.v1.Expense` | |
+| `next_page_token` | `string` | |
+
+### UpdateExpense
+
+Updates an existing expense.
+
+- REST: `PATCH /v1/expenses/{expense.id}`
+- gRPC: `rpc.expense.v1.ExpenseService/UpdateExpense`
+
+**Request:** `rpc.expense.v1.UpdateExpenseRequest`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `expense` | `rpc.expense.v1.Expense` | Must include id |
+| `update_mask` | `google.protobuf.FieldMask` | |
+
+**Response:** `rpc.expense.v1.Expense`
+
+### DeleteExpense
+
+Deletes an expense.
+
+- REST: `DELETE /v1/expenses/{id}`
+- gRPC: `rpc.expense.v1.ExpenseService/DeleteExpense`
+
+**Request:** `rpc.expense.v1.DeleteExpenseRequest`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `string` | Required |
+
+**Response:** `google.protobuf.Timestamp`
+
 
 Common
 - Health: GET `/livez`

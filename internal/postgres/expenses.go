@@ -8,8 +8,8 @@ import (
 
 	"connectrpc.com/connect"
 	expensev1 "github.com/grpc-buf/internal/gen/proto/expense"
-	money "github.com/grpc-buf/internal/gen/proto/google/type"
 	"github.com/jackc/pgx/v5"
+	"google.golang.org/genproto/googleapis/type/money"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"

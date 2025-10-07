@@ -14,6 +14,22 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    container_name: mcp-server
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ENVIRONMENT=dev
+      - CONFIG_PATH=/app/config/local.yaml
+    stdin_open: true
+    tty: true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   postgres:
     container_name: postgres
     image: postgres:17.4

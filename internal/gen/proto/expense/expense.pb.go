@@ -7,8 +7,8 @@
 package expensev1
 
 import (
-	_ "github.com/grpc-buf/internal/gen/proto/google/api"
-	_type "github.com/grpc-buf/internal/gen/proto/google/type"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
+	money "google.golang.org/genproto/googleapis/type/money"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -30,7 +30,7 @@ type Expense struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                       // Server-generated ID
 	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // Owner of the expense
-	Amount        *_type.Money           `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`               // Amount and currency
+	Amount        *money.Money           `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`               // Amount and currency
 	Category      string                 `protobuf:"bytes,4,opt,name=category,proto3" json:"category,omitempty"`           // Category label
 	Description   string                 `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`     // Optional description
 	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
@@ -83,7 +83,7 @@ func (x *Expense) GetUserId() string {
 	return ""
 }
 
-func (x *Expense) GetAmount() *_type.Money {
+func (x *Expense) GetAmount() *money.Money {
 	if x != nil {
 		return x.Amount
 	}
@@ -477,7 +477,7 @@ var file_expense_expense_proto_goTypes = []any{
 	(*ListExpensesResponse)(nil),  // 4: rpc.expense.v1.ListExpensesResponse
 	(*UpdateExpenseRequest)(nil),  // 5: rpc.expense.v1.UpdateExpenseRequest
 	(*DeleteExpenseRequest)(nil),  // 6: rpc.expense.v1.DeleteExpenseRequest
-	(*_type.Money)(nil),           // 7: google.type.Money
+	(*money.Money)(nil),           // 7: google.type.Money
 	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil), // 9: google.protobuf.FieldMask
 }

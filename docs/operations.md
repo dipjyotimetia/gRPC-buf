@@ -5,6 +5,21 @@ Running Locally
   - Services: `api` (port from `config/local.yaml`), `postgres` (5432)
 - Or run the app directly: `make run` (expects Postgres reachable per `config/local.yaml`)
 
+## Testing
+
+- Run unit tests: `make test`
+- Run integration tests: `make test-integration` (requires a running server)
+
+## Code Generation
+
+- To regenerate code from the protobuf definitions, run: `make generate`
+
+## MCP Server
+
+This project includes an "MCP" server that communicates over standard I/O. This server is likely intended for use in a specific context, such as being run as a child process by another application. For most local development, you should use `make run` to start the main API server.
+
+- To run the MCP server: `make mcp-run`
+
 Health & Readiness
 - Liveness: `GET /livez` returns 200 when the server process is running.
 - Readiness: `GET /readyz` returns 200 when DB is reachable; 503 otherwise.

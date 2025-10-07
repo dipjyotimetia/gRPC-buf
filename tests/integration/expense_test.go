@@ -11,7 +11,7 @@ import (
 	"connectrpc.com/connect"
 	expensev1 "github.com/grpc-buf/internal/gen/proto/expense"
 	"github.com/grpc-buf/internal/gen/proto/expense/expensev1connect"
-	money "github.com/grpc-buf/internal/gen/proto/google/type"
+	"google.golang.org/genproto/googleapis/type/money"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
