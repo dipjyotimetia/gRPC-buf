@@ -12,14 +12,14 @@ Examples (Go):
 
 ```go
 // Connect protocol (default)
-client := paymentv1connect.NewPaymentClient(
+client := paymentv1connect.NewPaymentServiceClient(
     http.DefaultClient,
     "http://localhost:8080",
 )
 res, err := client.MakePayment(ctx, connect.NewRequest(&paymentv1.PaymentRequest{/*...*/}))
 
 // gRPC
-grpcClient := paymentv1connect.NewPaymentClient(
+grpcClient := paymentv1connect.NewPaymentServiceClient(
     http.DefaultClient,
     "http://localhost:8080",
     connect.WithGRPC(),
@@ -99,14 +99,14 @@ Logs in a user and returns an access token.
 
 ## Payment API
 
-Service: `rpc.payment.v1.Payment`
+Service: `rpc.payment.v1.PaymentService`
 
 ### MakePayment
 
 Processes a payment.
 
 - REST: `POST /v1/payment:make`
-- gRPC: `rpc.payment.v1.Payment/MakePayment`
+- gRPC: `rpc.payment.v1.PaymentService/MakePayment`
 
 **Request:** `rpc.payment.v1.PaymentRequest`
 
@@ -131,7 +131,7 @@ Processes a payment.
 Marks an invoice as paid.
 
 - REST: `POST /v1/invoice:markPaid`
-- gRPC: `rpc.payment.v1.Payment/MarkInvoicePaid`
+- gRPC: `rpc.payment.v1.PaymentService/MarkInvoicePaid`
 
 **Request:** `rpc.payment.v1.Invoice`
 
@@ -149,7 +149,7 @@ Marks an invoice as paid.
 Pays an invoice.
 
 - REST: `POST /v1/invoice:pay`
-- gRPC: `rpc.payment.v1.Payment/PayInvoice`
+- gRPC: `rpc.payment.v1.PaymentService/PayInvoice`
 
 **Request:** `rpc.payment.v1.Invoice`
 
@@ -245,7 +245,7 @@ Deletes an expense.
 
 Common
 - Health: GET `/livez`
-- gRPC Reflection: enabled for Payment, UserService, ExpenseService
+- gRPC Reflection: enabled for PaymentService, UserService, ExpenseService
 
 Sequence (Expense: Create)
 

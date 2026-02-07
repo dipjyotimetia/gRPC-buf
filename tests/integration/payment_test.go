@@ -19,7 +19,7 @@ import (
 )
 
 func TestPayment(t *testing.T) {
-	client := paymentv1connect.NewPaymentClient(
+	client := paymentv1connect.NewPaymentServiceClient(
 		http.DefaultClient,
 		"http://localhost:8080",
 		connect.WithGRPC(),

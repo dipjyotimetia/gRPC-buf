@@ -4,70 +4,69 @@
 package server
 
 import (
-    "context"
-    "net/http"
-    "net/http/httptest"
-    "os"
-    "testing"
-    "time"
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+	"time"
 
-    "connectrpc.com/connect"
-    paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
-    "github.com/grpc-buf/internal/gen/proto/payment/paymentv1connect"
+	"connectrpc.com/connect"
+	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
+	"github.com/grpc-buf/internal/gen/proto/payment/paymentv1connect"
 
-    "github.com/grpc-buf/internal/postgres"
-    "github.com/grpc-buf/internal/service"
-    "github.com/stretchr/testify/assert"
-    "github.com/stretchr/testify/require"
-    "google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/grpc-buf/internal/postgres"
+	"github.com/grpc-buf/internal/service"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestElizaServer(t *testing.T) {
-    t.Parallel()
+	t.Parallel()
 
-    // Skip if DATABASE_URL is not set (e.g., when testing against docker-compose API)
-    if os.Getenv("DATABASE_URL") == "" {
-        t.Skip("Skipping test: DATABASE_URL not set")
-    }
+	// Skip if DATABASE_URL is not set (e.g., when testing against docker-compose API)
+	if os.Getenv("DATABASE_URL") == "" {
+		t.Skip("Skipping test: DATABASE_URL not set")
+	}
 
-    var (
-        db             = postgres.NewDatabaseConnection()
-        paymentService = service.NewPaymentService(db)
-    )
-    mux := http.NewServeMux()
-    mux.Handle(paymentv1connect.NewPaymentHandler(paymentService))
-    server := httptest.NewUnstartedServer(mux)
-    server.EnableHTTP2 = true
-    server.StartTLS()
-    defer server.Close()
+	var (
+		db             = postgres.NewDatabaseConnection()
+		paymentService = service.NewPaymentService(db)
+	)
+	mux := http.NewServeMux()
+	mux.Handle(paymentv1connect.NewPaymentServiceHandler(paymentService))
+	server := httptest.NewUnstartedServer(mux)
+	server.EnableHTTP2 = true
+	server.StartTLS()
+	defer server.Close()
 
-    connectClient := paymentv1connect.NewPaymentClient(
-        server.Client(),
-        server.URL,
-    )
-    grpcClient := paymentv1connect.NewPaymentClient(
-        server.Client(),
-        server.URL,
-        connect.WithGRPC(),
-    )
-    clients := []paymentv1connect.PaymentClient{connectClient, grpcClient}
+	connectClient := paymentv1connect.NewPaymentServiceClient(
+		server.Client(),
+		server.URL,
+	)
+	grpcClient := paymentv1connect.NewPaymentServiceClient(
+		server.Client(),
+		server.URL,
+		connect.WithGRPC(),
+	)
+	clients := []paymentv1connect.PaymentServiceClient{connectClient, grpcClient}
 
-    t.Run("say", func(t *testing.T) {
-        for _, client := range clients {
-            result, err := client.MakePayment(context.Background(), connect.NewRequest(&paymentv1.PaymentRequest{
-                CardNo:       123567887,
-                Card:         2,
-                Name:         "TestCard",
-                AddressLines: []string{"efwefew"},
-                Amount:       10,
-                PaymentCreated: &timestamppb.Timestamp{
-                    Seconds: int64(time.Now().Second()),
-                    Nanos:   int32(time.Now().Nanosecond()),
-                },
-            }))
-            require.Nil(t, err)
-            assert.True(t, len(result.Msg.String()) > 0)
-        }
-    })
+	t.Run("say", func(t *testing.T) {
+		for _, client := range clients {
+			result, err := client.MakePayment(context.Background(), connect.NewRequest(&paymentv1.PaymentRequest{
+				CardNo:       123567887,
+				Card:         2,
+				Name:         "TestCard",
+				AddressLines: []string{"efwefew"},
+				Amount:       10,
+				PaymentCreated: &timestamppb.Timestamp{
+					Seconds: int64(time.Now().Second()),
+					Nanos:   int32(time.Now().Nanosecond()),
+				},
+			}))
+			require.Nil(t, err)
+			assert.True(t, len(result.Msg.String()) > 0)
+		}
+	})
 }
-

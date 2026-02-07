@@ -17,7 +17,7 @@ import (
 
 // This test uses the default Connect protocol (no WithGRPC/WithGRPCWeb option).
 func TestConnectProtocol_MakePayment(t *testing.T) {
-	client := paymentv1connect.NewPaymentClient(
+	client := paymentv1connect.NewPaymentServiceClient(
 		http.DefaultClient,
 		"http://localhost:8080",
 	)

@@ -92,7 +92,7 @@ migrate-run-local: ## Run embedded migrations against custom DSN. Usage: make mi
 	esac; \
 	CONFIG_PATH=config/local.yaml CFG_DATABASE_URL="$$dsn" $(GO) run ./cmd/migrate
 
-.PHONY: buf golangci-lint protoc-gen-go protoc-gen-go-grpc
+.PHONY: buf golangci-lint protoc-gen-go
 
 buf:
 	go install github.com/bufbuild/buf/cmd/buf@latest
@@ -102,9 +102,6 @@ golangci-lint:
 
 protoc-gen-go:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-
-protoc-gen-go-grpc:
-		go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 .PHONY: protoc-gen-connect-go
 protoc-gen-connect-go:
@@ -170,7 +167,7 @@ docker-mcp-restart: ## Restart MCP server
 
 .PHONY: setup
 setup: ## Install dev tools
-	$(MAKE) buf golangci-lint protoc-gen-go protoc-gen-go-grpc protoc-gen-connect-go
+	$(MAKE) buf golangci-lint protoc-gen-go protoc-gen-connect-go
 .PHONY: migrate-install
 migrate-install: ## Install golang-migrate CLI with Postgres driver (requires Go toolchain)
 	CGO_ENABLED=0 $(GO) install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest

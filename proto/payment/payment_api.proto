@@ -6,8 +6,8 @@ import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "google/type/money.proto";
 
-// Payment service provides methods for making payments and managing invoices
-service Payment {
+// PaymentService provides methods for making payments and managing invoices
+service PaymentService {
   rpc MakePayment(PaymentRequest) returns (PaymentResponse) {
     option (google.api.http) = {
       post: "/v1/payment:make"
@@ -61,10 +61,10 @@ enum PaymentStatus {
 // CardType enum represents different types of payment cards
 enum CardType {
   CARD_TYPE_UNSPECIFIED = 0; // Unspecified
-  CARD_TYPE_DEBIT = 1;       // Debit Card
-  CARD_TYPE_CREDIT = 2;      // Credit Card
-  CARD_TYPE_MASTERCARD = 3;  // Master Card
-  CARD_TYPE_REWARD = 4;      // Reward Card
+  CARD_TYPE_DEBIT = 1; // Debit Card
+  CARD_TYPE_CREDIT = 2; // Credit Card
+  CARD_TYPE_MASTERCARD = 3; // Master Card
+  CARD_TYPE_REWARD = 4; // Reward Card
 }
 
 message Empty {}

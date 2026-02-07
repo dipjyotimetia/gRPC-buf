@@ -1,23 +1,23 @@
 package httptransport
 
 import (
-    "net/http"
+	"net/http"
 
-    "connectrpc.com/connect"
-    "connectrpc.com/grpchealth"
-    "connectrpc.com/grpcreflect"
-    "github.com/grpc-buf/internal/gen/proto/expense/expensev1connect"
-    "github.com/grpc-buf/internal/gen/proto/payment/paymentv1connect"
-    "github.com/grpc-buf/internal/gen/proto/registration/userv1connect"
-    "github.com/grpc-buf/internal/service"
+	"connectrpc.com/connect"
+	"connectrpc.com/grpchealth"
+	"connectrpc.com/grpcreflect"
+	"github.com/grpc-buf/internal/gen/proto/expense/expensev1connect"
+	"github.com/grpc-buf/internal/gen/proto/payment/paymentv1connect"
+	"github.com/grpc-buf/internal/gen/proto/registration/userv1connect"
+	"github.com/grpc-buf/internal/service"
 )
 
 // NewMux wires RPC handlers and returns an http.ServeMux.
 func NewMux(payment service.PaymentService, user service.UserService, expense service.ExpenseService) *http.ServeMux {
-    mux := http.NewServeMux()
+	mux := http.NewServeMux()
 
 	compress1KB := connect.WithCompressMinBytes(1024)
-	mux.Handle(paymentv1connect.NewPaymentHandler(
+	mux.Handle(paymentv1connect.NewPaymentServiceHandler(
 		payment,
 		compress1KB,
 	))
@@ -34,7 +34,7 @@ func NewMux(payment service.PaymentService, user service.UserService, expense se
 
 	mux.Handle(grpchealth.NewHandler(
 		grpchealth.NewStaticChecker(
-			paymentv1connect.PaymentName,
+			paymentv1connect.PaymentServiceName,
 			expensev1connect.ExpenseServiceName,
 			userv1connect.UserServiceName),
 		compress1KB,
@@ -42,7 +42,7 @@ func NewMux(payment service.PaymentService, user service.UserService, expense se
 
 	mux.Handle(grpcreflect.NewHandlerV1(
 		grpcreflect.NewStaticReflector(
-			paymentv1connect.PaymentName,
+			paymentv1connect.PaymentServiceName,
 			expensev1connect.ExpenseServiceName,
 			userv1connect.UserServiceName),
 		compress1KB,
@@ -50,7 +50,7 @@ func NewMux(payment service.PaymentService, user service.UserService, expense se
 
 	mux.Handle(grpcreflect.NewHandlerV1Alpha(
 		grpcreflect.NewStaticReflector(
-			paymentv1connect.PaymentName,
+			paymentv1connect.PaymentServiceName,
 			expensev1connect.ExpenseServiceName,
 			userv1connect.UserServiceName,
 		),
@@ -63,50 +63,50 @@ func NewMux(payment service.PaymentService, user service.UserService, expense se
 		_, _ = w.Write([]byte("ok"))
 	})
 
-    return mux
+	return mux
 }
 
 // NewMuxWithInterceptors allows custom unary interceptors (e.g., rate limiting).
 func NewMuxWithInterceptors(
-    payment service.PaymentService,
-    user service.UserService,
-    expense service.ExpenseService,
-    interceptors ...connect.Interceptor,
+	payment service.PaymentService,
+	user service.UserService,
+	expense service.ExpenseService,
+	interceptors ...connect.Interceptor,
 ) *http.ServeMux {
-    mux := http.NewServeMux()
-    compress1KB := connect.WithCompressMinBytes(1024)
-    opts := []connect.HandlerOption{compress1KB}
-    if len(interceptors) > 0 {
-        opts = append(opts, connect.WithInterceptors(interceptors...))
-    }
-    mux.Handle(paymentv1connect.NewPaymentHandler(payment, opts...))
-    mux.Handle(expensev1connect.NewExpenseServiceHandler(expense, opts...))
-    mux.Handle(userv1connect.NewUserServiceHandler(user, opts...))
-    mux.Handle(grpchealth.NewHandler(
-        grpchealth.NewStaticChecker(
-            paymentv1connect.PaymentName,
-            expensev1connect.ExpenseServiceName,
-            userv1connect.UserServiceName),
-        compress1KB,
-    ))
-    mux.Handle(grpcreflect.NewHandlerV1(
-        grpcreflect.NewStaticReflector(
-            paymentv1connect.PaymentName,
-            expensev1connect.ExpenseServiceName,
-            userv1connect.UserServiceName),
-        compress1KB,
-    ))
-    mux.Handle(grpcreflect.NewHandlerV1Alpha(
-        grpcreflect.NewStaticReflector(
-            paymentv1connect.PaymentName,
-            expensev1connect.ExpenseServiceName,
-            userv1connect.UserServiceName,
-        ),
-        compress1KB,
-    ))
-    mux.HandleFunc("/livez", func(w http.ResponseWriter, r *http.Request) {
-        w.WriteHeader(http.StatusOK)
-        _, _ = w.Write([]byte("ok"))
-    })
-    return mux
+	mux := http.NewServeMux()
+	compress1KB := connect.WithCompressMinBytes(1024)
+	opts := []connect.HandlerOption{compress1KB}
+	if len(interceptors) > 0 {
+		opts = append(opts, connect.WithInterceptors(interceptors...))
+	}
+	mux.Handle(paymentv1connect.NewPaymentServiceHandler(payment, opts...))
+	mux.Handle(expensev1connect.NewExpenseServiceHandler(expense, opts...))
+	mux.Handle(userv1connect.NewUserServiceHandler(user, opts...))
+	mux.Handle(grpchealth.NewHandler(
+		grpchealth.NewStaticChecker(
+			paymentv1connect.PaymentServiceName,
+			expensev1connect.ExpenseServiceName,
+			userv1connect.UserServiceName),
+		compress1KB,
+	))
+	mux.Handle(grpcreflect.NewHandlerV1(
+		grpcreflect.NewStaticReflector(
+			paymentv1connect.PaymentServiceName,
+			expensev1connect.ExpenseServiceName,
+			userv1connect.UserServiceName),
+		compress1KB,
+	))
+	mux.Handle(grpcreflect.NewHandlerV1Alpha(
+		grpcreflect.NewStaticReflector(
+			paymentv1connect.PaymentServiceName,
+			expensev1connect.ExpenseServiceName,
+			userv1connect.UserServiceName,
+		),
+		compress1KB,
+	))
+	mux.HandleFunc("/livez", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
+	return mux
 }
