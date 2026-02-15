@@ -19,6 +19,8 @@ import (
 )
 
 func TestPayment(t *testing.T) {
+	checkServerAvailable(t, "http://localhost:8080")
+	
 	client := paymentv1connect.NewPaymentServiceClient(
 		http.DefaultClient,
 		"http://localhost:8080",

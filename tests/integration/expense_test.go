@@ -16,6 +16,8 @@ import (
 )
 
 func TestExpenseCRUD(t *testing.T) {
+	checkServerAvailable(t, "http://localhost:8080")
+	
 	client := expensev1connect.NewExpenseServiceClient(
 		http.DefaultClient,
 		"http://localhost:8080",
