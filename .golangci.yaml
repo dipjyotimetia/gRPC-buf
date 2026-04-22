@@ -1,0 +1,36 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+issues:
+  exclude-dirs:
+    - internal/gen
+  exclude-rules:
+    - path: _test\.go$
+      linters:
+        - errcheck
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosimple
+    - misspell
+    - revive
+
+linters-settings:
+  revive:
+    rules:
+      - name: var-naming
+      - name: package-comments
+        disabled: true
+      - name: exported
+        disabled: true
+  staticcheck:
+    checks:
+      - all
+      - -ST1000 # package comment

@@ -28,7 +28,8 @@ func TestMCPServer_Initialization(t *testing.T) {
 	cfg.Database.URL = "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable"
 
 	// Initialize database connection
-	dataStore := postgres.NewDatabaseConnectionFromConfig(cfg)
+	dataStore, err := postgres.NewDatabaseConnectionFromConfig(context.Background(), cfg)
+	require.NoError(t, err, "Failed to connect to database")
 	require.NotNil(t, dataStore, "DataStore should not be nil")
 	defer dataStore.Close()
 
@@ -47,7 +48,8 @@ func TestMCPServer_DatabaseConnectivity(t *testing.T) {
 	cfg.Database.URL = "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable"
 
 	// Initialize database connection
-	dataStore := postgres.NewDatabaseConnectionFromConfig(cfg)
+	dataStore, err := postgres.NewDatabaseConnectionFromConfig(context.Background(), cfg)
+	require.NoError(t, err, "Failed to connect to database")
 	require.NotNil(t, dataStore, "DataStore should not be nil")
 	defer dataStore.Close()
 
@@ -75,7 +77,8 @@ func TestMCPServer_ServiceAdapters(t *testing.T) {
 	cfg.Database.URL = "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable"
 
 	// Initialize database connection
-	dataStore := postgres.NewDatabaseConnectionFromConfig(cfg)
+	dataStore, err := postgres.NewDatabaseConnectionFromConfig(context.Background(), cfg)
+	require.NoError(t, err, "Failed to connect to database")
 	require.NotNil(t, dataStore, "DataStore should not be nil")
 	defer dataStore.Close()
 
@@ -107,7 +110,8 @@ func TestMCPServer_CreateExpense(t *testing.T) {
 	cfg.Database.URL = "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable"
 
 	// Initialize database connection
-	dataStore := postgres.NewDatabaseConnectionFromConfig(cfg)
+	dataStore, err := postgres.NewDatabaseConnectionFromConfig(context.Background(), cfg)
+	require.NoError(t, err, "Failed to connect to database")
 	require.NotNil(t, dataStore, "DataStore should not be nil")
 	defer dataStore.Close()
 
@@ -161,7 +165,8 @@ func TestMCPServer_UserRegistration(t *testing.T) {
 	cfg.Database.URL = "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable"
 
 	// Initialize database connection
-	dataStore := postgres.NewDatabaseConnectionFromConfig(cfg)
+	dataStore, err := postgres.NewDatabaseConnectionFromConfig(context.Background(), cfg)
+	require.NoError(t, err, "Failed to connect to database")
 	require.NotNil(t, dataStore, "DataStore should not be nil")
 	defer dataStore.Close()
 

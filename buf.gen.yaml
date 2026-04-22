@@ -32,3 +32,9 @@ plugins:
   - local: protoc-gen-connect-go
     out: internal/gen/proto
     opt: paths=source_relative
+  - local:
+      - go
+      - run
+      - github.com/redpanda-data/protoc-gen-go-mcp/cmd/protoc-gen-go-mcp@v0.0.0-20260323112146-887f275039cd
+    out: internal/gen/proto
+    opt: paths=source_relative
