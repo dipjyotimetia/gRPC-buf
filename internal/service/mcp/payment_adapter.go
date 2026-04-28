@@ -29,7 +29,7 @@ func (a *PaymentServiceAdapter) MakePayment(ctx context.Context, req *paymentv1.
 }
 
 // MarkInvoicePaid adapts from MCP to Connect
-func (a *PaymentServiceAdapter) MarkInvoicePaid(ctx context.Context, req *paymentv1.Invoice) (*paymentv1.Invoice, error) {
+func (a *PaymentServiceAdapter) MarkInvoicePaid(ctx context.Context, req *paymentv1.MarkInvoicePaidRequest) (*paymentv1.Invoice, error) {
 	connectReq := connect.NewRequest(req)
 	resp, err := a.svc.MarkInvoicePaid(ctx, connectReq)
 	if err != nil {
@@ -39,7 +39,7 @@ func (a *PaymentServiceAdapter) MarkInvoicePaid(ctx context.Context, req *paymen
 }
 
 // PayInvoice adapts from MCP to Connect
-func (a *PaymentServiceAdapter) PayInvoice(ctx context.Context, req *paymentv1.Invoice) (*paymentv1.Invoice, error) {
+func (a *PaymentServiceAdapter) PayInvoice(ctx context.Context, req *paymentv1.PayInvoiceRequest) (*paymentv1.Invoice, error) {
 	connectReq := connect.NewRequest(req)
 	resp, err := a.svc.PayInvoice(ctx, connectReq)
 	if err != nil {

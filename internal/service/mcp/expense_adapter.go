@@ -6,7 +6,7 @@ import (
 	"connectrpc.com/connect"
 	expensev1 "github.com/grpc-buf/internal/gen/proto/expense"
 	"github.com/grpc-buf/internal/service"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // ExpenseServiceAdapter adapts Connect-based ExpenseService to MCP interface
@@ -60,7 +60,7 @@ func (a *ExpenseServiceAdapter) UpdateExpense(ctx context.Context, req *expensev
 }
 
 // DeleteExpense adapts from MCP to Connect
-func (a *ExpenseServiceAdapter) DeleteExpense(ctx context.Context, req *expensev1.DeleteExpenseRequest) (*timestamppb.Timestamp, error) {
+func (a *ExpenseServiceAdapter) DeleteExpense(ctx context.Context, req *expensev1.DeleteExpenseRequest) (*emptypb.Empty, error) {
 	connectReq := connect.NewRequest(req)
 	resp, err := a.svc.DeleteExpense(ctx, connectReq)
 	if err != nil {

@@ -14,6 +14,7 @@ import (
 	"google.golang.org/genproto/googleapis/type/money"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -227,9 +228,9 @@ func (s *Store) UpdateExpense(ctx context.Context, req *connect.Request[expensev
 	return s.GetExpense(ctx, connect.NewRequest(&expensev1.GetExpenseRequest{Id: exp.GetId()}))
 }
 
-// DeleteExpense removes an expense by id and returns the deletion timestamp.
-// Returns codes.NotFound when no row matched.
-func (s *Store) DeleteExpense(ctx context.Context, req *connect.Request[expensev1.DeleteExpenseRequest]) (*connect.Response[timestamppb.Timestamp], error) {
+// DeleteExpense removes an expense by id. Returns codes.NotFound when no row
+// matched. Returns an empty response on success (AIP-135).
+func (s *Store) DeleteExpense(ctx context.Context, req *connect.Request[expensev1.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error) {
 	id := strings.TrimSpace(req.Msg.GetId())
 	if id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
@@ -242,5 +243,5 @@ func (s *Store) DeleteExpense(ctx context.Context, req *connect.Request[expensev
 	if res.RowsAffected() == 0 {
 		return nil, status.Error(codes.NotFound, "expense not found")
 	}
-	return connect.NewResponse(timestamppb.Now()), nil
+	return connect.NewResponse(&emptypb.Empty{}), nil
 }

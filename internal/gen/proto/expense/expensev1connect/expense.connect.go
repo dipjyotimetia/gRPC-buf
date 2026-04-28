@@ -9,7 +9,7 @@ import (
 	context "context"
 	errors "errors"
 	expense "github.com/grpc-buf/internal/gen/proto/expense"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 	strings "strings"
 )
@@ -57,7 +57,9 @@ type ExpenseServiceClient interface {
 	GetExpense(context.Context, *connect.Request[expense.GetExpenseRequest]) (*connect.Response[expense.Expense], error)
 	ListExpenses(context.Context, *connect.Request[expense.ListExpensesRequest]) (*connect.Response[expense.ListExpensesResponse], error)
 	UpdateExpense(context.Context, *connect.Request[expense.UpdateExpenseRequest]) (*connect.Response[expense.Expense], error)
-	DeleteExpense(context.Context, *connect.Request[expense.DeleteExpenseRequest]) (*connect.Response[timestamppb.Timestamp], error)
+	// DeleteExpense removes the expense. Returns Empty on success (AIP-135);
+	// codes.NotFound if no row matched.
+	DeleteExpense(context.Context, *connect.Request[expense.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error)
 }
 
 // NewExpenseServiceClient constructs a client for the rpc.expense.v1.ExpenseService service. By
@@ -95,7 +97,7 @@ func NewExpenseServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(expenseServiceMethods.ByName("UpdateExpense")),
 			connect.WithClientOptions(opts...),
 		),
-		deleteExpense: connect.NewClient[expense.DeleteExpenseRequest, timestamppb.Timestamp](
+		deleteExpense: connect.NewClient[expense.DeleteExpenseRequest, emptypb.Empty](
 			httpClient,
 			baseURL+ExpenseServiceDeleteExpenseProcedure,
 			connect.WithSchema(expenseServiceMethods.ByName("DeleteExpense")),
@@ -110,7 +112,7 @@ type expenseServiceClient struct {
 	getExpense    *connect.Client[expense.GetExpenseRequest, expense.Expense]
 	listExpenses  *connect.Client[expense.ListExpensesRequest, expense.ListExpensesResponse]
 	updateExpense *connect.Client[expense.UpdateExpenseRequest, expense.Expense]
-	deleteExpense *connect.Client[expense.DeleteExpenseRequest, timestamppb.Timestamp]
+	deleteExpense *connect.Client[expense.DeleteExpenseRequest, emptypb.Empty]
 }
 
 // CreateExpense calls rpc.expense.v1.ExpenseService.CreateExpense.
@@ -134,7 +136,7 @@ func (c *expenseServiceClient) UpdateExpense(ctx context.Context, req *connect.R
 }
 
 // DeleteExpense calls rpc.expense.v1.ExpenseService.DeleteExpense.
-func (c *expenseServiceClient) DeleteExpense(ctx context.Context, req *connect.Request[expense.DeleteExpenseRequest]) (*connect.Response[timestamppb.Timestamp], error) {
+func (c *expenseServiceClient) DeleteExpense(ctx context.Context, req *connect.Request[expense.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error) {
 	return c.deleteExpense.CallUnary(ctx, req)
 }
 
@@ -144,7 +146,9 @@ type ExpenseServiceHandler interface {
 	GetExpense(context.Context, *connect.Request[expense.GetExpenseRequest]) (*connect.Response[expense.Expense], error)
 	ListExpenses(context.Context, *connect.Request[expense.ListExpensesRequest]) (*connect.Response[expense.ListExpensesResponse], error)
 	UpdateExpense(context.Context, *connect.Request[expense.UpdateExpenseRequest]) (*connect.Response[expense.Expense], error)
-	DeleteExpense(context.Context, *connect.Request[expense.DeleteExpenseRequest]) (*connect.Response[timestamppb.Timestamp], error)
+	// DeleteExpense removes the expense. Returns Empty on success (AIP-135);
+	// codes.NotFound if no row matched.
+	DeleteExpense(context.Context, *connect.Request[expense.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error)
 }
 
 // NewExpenseServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -221,6 +225,6 @@ func (UnimplementedExpenseServiceHandler) UpdateExpense(context.Context, *connec
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.expense.v1.ExpenseService.UpdateExpense is not implemented"))
 }
 
-func (UnimplementedExpenseServiceHandler) DeleteExpense(context.Context, *connect.Request[expense.DeleteExpenseRequest]) (*connect.Response[timestamppb.Timestamp], error) {
+func (UnimplementedExpenseServiceHandler) DeleteExpense(context.Context, *connect.Request[expense.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.expense.v1.ExpenseService.DeleteExpense is not implemented"))
 }

@@ -7,6 +7,48 @@ import (
 	"golang.org/x/time/rate"
 )
 
+func TestPeerHost(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"ipv4 with port", "192.168.1.1:54321", "192.168.1.1"},
+		{"ipv4 bare", "192.168.1.1", "192.168.1.1"},
+		{"ipv6 with port", "[2001:db8::1]:54321", "2001:db8::1"},
+		{"ipv6 loopback with port", "[::1]:8080", "::1"},
+		{"ipv6 bare", "2001:db8::1", "2001:db8::1"},
+		{"hostname with port", "client.example.com:9090", "client.example.com"},
+		{"hostname bare", "client.example.com", "client.example.com"},
+		{"empty", "", ""},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := peerHost(c.in)
+			if got != c.want {
+				t.Fatalf("peerHost(%q) = %q, want %q", c.in, got, c.want)
+			}
+		})
+	}
+}
+
+// TestPeerHost_BucketStability ensures two requests from the same client on
+// different source ports map to the same bucket key. A regression here would
+// make the rate limiter useless against a single client whose ephemeral port
+// rotates per request.
+func TestPeerHost_BucketStability(t *testing.T) {
+	a := peerHost("203.0.113.42:51001")
+	b := peerHost("203.0.113.42:51002")
+	if a != b {
+		t.Fatalf("expected stable key across ports; got %q vs %q", a, b)
+	}
+	v6a := peerHost("[2001:db8::5]:51001")
+	v6b := peerHost("[2001:db8::5]:51002")
+	if v6a != v6b {
+		t.Fatalf("expected stable IPv6 key across ports; got %q vs %q", v6a, v6b)
+	}
+}
+
 func TestLimiterAllowBurstAndThrottle(t *testing.T) {
 	l := &ipLimiter{m: make(map[string]*limiterEntry), r: rate.Limit(2), b: 2}
 	ip := "1.2.3.4"

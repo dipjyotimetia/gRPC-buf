@@ -10,6 +10,7 @@ import (
 	"github.com/grpc-buf/internal/config"
 	"github.com/grpc-buf/internal/postgres"
 	mcptransport "github.com/grpc-buf/internal/transport/mcp"
+	"github.com/grpc-buf/internal/version"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	slog.Info("Starting MCP server", "version", "1.0.0")
+	slog.Info("Starting MCP server", "version", version.Get().Version)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()

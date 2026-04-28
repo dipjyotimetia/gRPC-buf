@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/mail"
 	"strings"
@@ -62,7 +63,11 @@ func (s *Store) LoginUser(ctx context.Context, req *connect.Request[userv1.Login
 	// Build JWT
 	now := time.Now().UTC()
 	expirationTime := now.Add(15 * time.Minute)
-	jti := randomJTI()
+	jti, err := randomJTI()
+	if err != nil {
+		slog.Error("error generating JWT ID", "error", err)
+		return nil, status.Error(codes.Internal, "error generating authentication token")
+	}
 	issuer := strings.TrimSpace(s.sec.JWTIssuer)
 	if issuer == "" {
 		issuer = "grpc-buf"
@@ -140,8 +145,8 @@ func (s *Store) RegisterUser(ctx context.Context, req *connect.Request[userv1.Re
 	}
 
 	response := connect.NewResponse(&userv1.RegisterResponse{
-		Id:        userID,
-		CreatedAt: timestamppb.Now(),
+		Id:         userID,
+		CreateTime: timestamppb.Now(),
 	})
 	return response, nil
 }
@@ -176,10 +181,10 @@ func validatePassword(p string) error {
 	return nil
 }
 
-func randomJTI() string {
+func randomJTI() (string, error) {
 	var b [16]byte
 	if _, err := rand.Read(b[:]); err != nil {
-		return ""
+		return "", fmt.Errorf("randomJTI: %w", err)
 	}
-	return hex.EncodeToString(b[:])
+	return hex.EncodeToString(b[:]), nil
 }

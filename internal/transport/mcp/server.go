@@ -10,14 +10,12 @@ import (
 	"github.com/grpc-buf/internal/postgres"
 	"github.com/grpc-buf/internal/service"
 	mcpadapter "github.com/grpc-buf/internal/service/mcp"
+	"github.com/grpc-buf/internal/version"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/redpanda-data/protoc-gen-go-mcp/pkg/runtime/gosdk"
 )
 
-const (
-	serverName    = "grpc-buf-mcp-server"
-	serverVersion = "1.0.0"
-)
+const serverName = "grpc-buf-mcp-server"
 
 // Server exposes the Connect services as MCP tools over stdio. The underlying
 // *mcp.Server is retained so Serve can drive its own transport loop.
@@ -28,7 +26,7 @@ type Server struct {
 // NewServer wires the Connect services into an MCP server using the official
 // modelcontextprotocol/go-sdk via the protoc-gen-go-mcp gosdk adapter.
 func NewServer(dataStore postgres.DataStore) (*Server, error) {
-	raw, registrar := gosdk.NewServer(serverName, serverVersion)
+	raw, registrar := gosdk.NewServer(serverName, version.Get().Version)
 
 	expenseSvc := service.NewExpenseService(dataStore)
 	userSvc := service.NewUserService(dataStore)
@@ -40,7 +38,7 @@ func NewServer(dataStore postgres.DataStore) (*Server, error) {
 
 	expensev1mcp.RegisterExpenseServiceHandler(registrar, expenseAdapter)
 	userv1mcp.RegisterUserServiceHandler(registrar, userAdapter)
-	paymentv1mcp.RegisterPaymentHandler(registrar, paymentAdapter)
+	paymentv1mcp.RegisterPaymentServiceHandler(registrar, paymentAdapter)
 
 	slog.Info("MCP server initialized with all service handlers")
 

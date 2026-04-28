@@ -12,8 +12,8 @@ import (
 // PaymentService exposes payment operations as Connect handlers.
 type PaymentService interface {
 	MakePayment(ctx context.Context, c *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error)
-	MarkInvoicePaid(ctx context.Context, c *connect.Request[paymentv1.Invoice]) (*connect.Response[paymentv1.Invoice], error)
-	PayInvoice(ctx context.Context, c *connect.Request[paymentv1.Invoice]) (*connect.Response[paymentv1.Invoice], error)
+	MarkInvoicePaid(ctx context.Context, c *connect.Request[paymentv1.MarkInvoicePaidRequest]) (*connect.Response[paymentv1.Invoice], error)
+	PayInvoice(ctx context.Context, c *connect.Request[paymentv1.PayInvoiceRequest]) (*connect.Response[paymentv1.Invoice], error)
 }
 
 type paymentService struct {
@@ -25,11 +25,11 @@ func NewPaymentService(data postgres.DataStore) PaymentService {
 	return &paymentService{store: data}
 }
 
-func (s *paymentService) MarkInvoicePaid(_ context.Context, _ *connect.Request[paymentv1.Invoice]) (*connect.Response[paymentv1.Invoice], error) {
+func (s *paymentService) MarkInvoicePaid(_ context.Context, _ *connect.Request[paymentv1.MarkInvoicePaidRequest]) (*connect.Response[paymentv1.Invoice], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("MarkInvoicePaid not implemented"))
 }
 
-func (s *paymentService) PayInvoice(_ context.Context, _ *connect.Request[paymentv1.Invoice]) (*connect.Response[paymentv1.Invoice], error) {
+func (s *paymentService) PayInvoice(_ context.Context, _ *connect.Request[paymentv1.PayInvoiceRequest]) (*connect.Response[paymentv1.Invoice], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("PayInvoice not implemented"))
 }
 

@@ -5,6 +5,7 @@ package integration
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -19,13 +20,24 @@ import (
 	"google.golang.org/genproto/googleapis/type/money"
 )
 
+// testDSN is the default Postgres DSN used by integration tests.
+// Override by exporting TEST_DATABASE_URL.
+const defaultTestDSN = "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable"
+
+func testDSN() string {
+	if v := os.Getenv("TEST_DATABASE_URL"); v != "" {
+		return v
+	}
+	return defaultTestDSN
+}
+
 func TestMCPServer_Initialization(t *testing.T) {
 	// Load test configuration
 	cfg, err := config.Load("../../config/local.yaml")
 	require.NoError(t, err, "Failed to load configuration")
 
 	// Override database URL for test environment
-	cfg.Database.URL = "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable"
+	cfg.Database.URL = testDSN()
 
 	// Initialize database connection
 	dataStore, err := postgres.NewDatabaseConnectionFromConfig(context.Background(), cfg)
@@ -45,7 +57,7 @@ func TestMCPServer_DatabaseConnectivity(t *testing.T) {
 	require.NoError(t, err, "Failed to load configuration")
 
 	// Override database URL for test environment
-	cfg.Database.URL = "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable"
+	cfg.Database.URL = testDSN()
 
 	// Initialize database connection
 	dataStore, err := postgres.NewDatabaseConnectionFromConfig(context.Background(), cfg)
@@ -74,7 +86,7 @@ func TestMCPServer_ServiceAdapters(t *testing.T) {
 	require.NoError(t, err, "Failed to load configuration")
 
 	// Override database URL for test environment
-	cfg.Database.URL = "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable"
+	cfg.Database.URL = testDSN()
 
 	// Initialize database connection
 	dataStore, err := postgres.NewDatabaseConnectionFromConfig(context.Background(), cfg)
@@ -107,7 +119,7 @@ func TestMCPServer_CreateExpense(t *testing.T) {
 	require.NoError(t, err, "Failed to load configuration")
 
 	// Override database URL for test environment
-	cfg.Database.URL = "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable"
+	cfg.Database.URL = testDSN()
 
 	// Initialize database connection
 	dataStore, err := postgres.NewDatabaseConnectionFromConfig(context.Background(), cfg)
@@ -162,7 +174,7 @@ func TestMCPServer_UserRegistration(t *testing.T) {
 	require.NoError(t, err, "Failed to load configuration")
 
 	// Override database URL for test environment
-	cfg.Database.URL = "postgres://postgres:postgres@localhost:5432/grpcbuf?sslmode=disable"
+	cfg.Database.URL = testDSN()
 
 	// Initialize database connection
 	dataStore, err := postgres.NewDatabaseConnectionFromConfig(context.Background(), cfg)
@@ -186,6 +198,6 @@ func TestMCPServer_UserRegistration(t *testing.T) {
 	if err == nil {
 		require.NotNil(t, registerResp, "Register response should not be nil")
 		assert.NotEmpty(t, registerResp.Msg.Id, "Should receive a user ID")
-		assert.NotNil(t, registerResp.Msg.CreatedAt, "Should have creation timestamp")
+		assert.NotNil(t, registerResp.Msg.CreateTime, "Should have creation timestamp")
 	}
 }

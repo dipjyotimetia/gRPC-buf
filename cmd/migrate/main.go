@@ -5,12 +5,15 @@ import (
 	"database/sql"
 	"log/slog"
 	"os"
+	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/grpc-buf/internal/config"
 	"github.com/grpc-buf/internal/postgres/migrations"
 )
+
+const migrationTimeout = 2 * time.Minute
 
 func main() {
 	cfg, err := config.Bootstrap()
@@ -32,7 +35,10 @@ func main() {
 	}
 	defer db.Close()
 
-	if err := migrations.RunMigrations(context.Background(), db); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), migrationTimeout)
+	defer cancel()
+
+	if err := migrations.RunMigrations(ctx, db); err != nil {
 		slog.Error("migrations failed", "error", err)
 		os.Exit(1)
 	}

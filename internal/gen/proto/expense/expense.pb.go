@@ -11,6 +11,7 @@ import (
 	money "google.golang.org/genproto/googleapis/type/money"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
@@ -25,15 +26,22 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Expense resource
+// Expense is a single recorded expense entry for a user.
 type Expense struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                       // Server-generated ID
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // Owner of the expense
-	Amount        *money.Money           `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`               // Amount and currency
-	Category      string                 `protobuf:"bytes,4,opt,name=category,proto3" json:"category,omitempty"`           // Category label
-	Description   string                 `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`     // Optional description
-	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Output only. Server-generated identifier.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Owner of the expense.
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// Amount and currency.
+	Amount *money.Money `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`
+	// Category label.
+	Category string `protobuf:"bytes,4,opt,name=category,proto3" json:"category,omitempty"`
+	// Optional description.
+	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+	// Output only. Creation timestamp (AIP-142).
+	CreateTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	// Output only. Last-modified timestamp (AIP-142).
 	UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -118,9 +126,12 @@ func (x *Expense) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
+// CreateExpenseRequest creates a new expense. Server-managed fields on the
+// embedded Expense (id, create_time, update_time) are ignored.
 type CreateExpenseRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Expense       *Expense               `protobuf:"bytes,1,opt,name=expense,proto3" json:"expense,omitempty"` // Required: user_id, amount
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Required. Must include user_id and amount.
+	Expense       *Expense `protobuf:"bytes,1,opt,name=expense,proto3" json:"expense,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -163,8 +174,9 @@ func (x *CreateExpenseRequest) GetExpense() *Expense {
 }
 
 type GetExpenseRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"` // Required
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Required. The expense id to fetch.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -207,10 +219,13 @@ func (x *GetExpenseRequest) GetId() string {
 }
 
 type ListExpensesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // Optional filter by user
-	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Optional filter: return only expenses for this user.
+	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// Maximum number of expenses to return. Server may cap this value.
+	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// Opaque pagination token from a previous response.
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -267,9 +282,10 @@ func (x *ListExpensesRequest) GetPageToken() string {
 }
 
 type ListExpensesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Expenses      []*Expense             `protobuf:"bytes,1,rep,name=expenses,proto3" json:"expenses,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Expenses []*Expense             `protobuf:"bytes,1,rep,name=expenses,proto3" json:"expenses,omitempty"`
+	// Token to retrieve the next page, or empty if there are no more results.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -319,8 +335,11 @@ func (x *ListExpensesResponse) GetNextPageToken() string {
 }
 
 type UpdateExpenseRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Expense       *Expense               `protobuf:"bytes,1,opt,name=expense,proto3" json:"expense,omitempty"` // Must include id
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Required. The expense to update; must include id. Only fields listed in
+	// update_mask are applied.
+	Expense *Expense `protobuf:"bytes,1,opt,name=expense,proto3" json:"expense,omitempty"`
+	// Supported paths: category, description, amount.
 	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -371,8 +390,9 @@ func (x *UpdateExpenseRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
 }
 
 type DeleteExpenseRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"` // Required
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Required. The expense id to delete.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -418,7 +438,7 @@ var File_expense_expense_proto protoreflect.FileDescriptor
 
 const file_expense_expense_proto_rawDesc = "" +
 	"\n" +
-	"\x15expense/expense.proto\x12\x0erpc.expense.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17google/type/money.proto\x1a\x1cgoogle/api/annotations.proto\"\x96\x02\n" +
+	"\x15expense/expense.proto\x12\x0erpc.expense.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17google/type/money.proto\"\x96\x02\n" +
 	"\aExpense\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12*\n" +
@@ -446,14 +466,14 @@ const file_expense_expense_proto_rawDesc = "" +
 	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\"&\n" +
 	"\x14DeleteExpenseRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id2\xb3\x04\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id2\xaf\x04\n" +
 	"\x0eExpenseService\x12g\n" +
 	"\rCreateExpense\x12$.rpc.expense.v1.CreateExpenseRequest\x1a\x17.rpc.expense.v1.Expense\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/v1/expenses\x12c\n" +
 	"\n" +
 	"GetExpense\x12!.rpc.expense.v1.GetExpenseRequest\x1a\x17.rpc.expense.v1.Expense\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/v1/expenses/{id}\x12o\n" +
 	"\fListExpenses\x12#.rpc.expense.v1.ListExpensesRequest\x1a$.rpc.expense.v1.ListExpensesResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/expenses\x12t\n" +
-	"\rUpdateExpense\x12$.rpc.expense.v1.UpdateExpenseRequest\x1a\x17.rpc.expense.v1.Expense\"$\x82\xd3\xe4\x93\x02\x1e:\x01*2\x19/v1/expenses/{expense.id}\x12l\n" +
-	"\rDeleteExpense\x12$.rpc.expense.v1.DeleteExpenseRequest\x1a\x1a.google.protobuf.Timestamp\"\x19\x82\xd3\xe4\x93\x02\x13*\x11/v1/expenses/{id}B\xb6\x01\n" +
+	"\rUpdateExpense\x12$.rpc.expense.v1.UpdateExpenseRequest\x1a\x17.rpc.expense.v1.Expense\"$\x82\xd3\xe4\x93\x02\x1e:\x01*2\x19/v1/expenses/{expense.id}\x12h\n" +
+	"\rDeleteExpense\x12$.rpc.expense.v1.DeleteExpenseRequest\x1a\x16.google.protobuf.Empty\"\x19\x82\xd3\xe4\x93\x02\x13*\x11/v1/expenses/{id}B\xb6\x01\n" +
 	"\x12com.rpc.expense.v1B\fExpenseProtoP\x01Z8github.com/grpc-buf/internal/gen/proto/expense;expensev1\xa2\x02\x03REX\xaa\x02\x0eRpc.Expense.V1\xca\x02\x0eRpc\\Expense\\V1\xe2\x02\x1aRpc\\Expense\\V1\\GPBMetadata\xea\x02\x10Rpc::Expense::V1b\x06proto3"
 
 var (
@@ -480,6 +500,7 @@ var file_expense_expense_proto_goTypes = []any{
 	(*money.Money)(nil),           // 7: google.type.Money
 	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
 	(*fieldmaskpb.FieldMask)(nil), // 9: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),         // 10: google.protobuf.Empty
 }
 var file_expense_expense_proto_depIdxs = []int32{
 	7,  // 0: rpc.expense.v1.Expense.amount:type_name -> google.type.Money
@@ -498,7 +519,7 @@ var file_expense_expense_proto_depIdxs = []int32{
 	0,  // 13: rpc.expense.v1.ExpenseService.GetExpense:output_type -> rpc.expense.v1.Expense
 	4,  // 14: rpc.expense.v1.ExpenseService.ListExpenses:output_type -> rpc.expense.v1.ListExpensesResponse
 	0,  // 15: rpc.expense.v1.ExpenseService.UpdateExpense:output_type -> rpc.expense.v1.Expense
-	8,  // 16: rpc.expense.v1.ExpenseService.DeleteExpense:output_type -> google.protobuf.Timestamp
+	10, // 16: rpc.expense.v1.ExpenseService.DeleteExpense:output_type -> google.protobuf.Empty
 	12, // [12:17] is the sub-list for method output_type
 	7,  // [7:12] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name

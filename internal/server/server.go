@@ -28,7 +28,10 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
-const shutdownTimeout = 10 * time.Second
+const (
+	shutdownTimeout = 10 * time.Second
+	readyzTimeout   = 2 * time.Second
+)
 
 // Run starts the HTTP/gRPC server and blocks until SIGINT/SIGTERM is received
 // or the underlying listener fails. cfg must be non-nil; callers should obtain
@@ -193,7 +196,7 @@ func newCORS(cfg *config.Config) *cors.Cors {
 // readyHandler returns HTTP 200 when dependencies are ready (DB ping).
 func readyHandler(db postgres.DataStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), readyzTimeout)
 		defer cancel()
 		if err := db.Ping(ctx); err != nil {
 			http.Error(w, "not ready", http.StatusServiceUnavailable)

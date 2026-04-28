@@ -32,19 +32,19 @@ func NewMuxWithInterceptors(
 	if len(interceptors) > 0 {
 		opts = append(opts, connect.WithInterceptors(interceptors...))
 	}
-	mux.Handle(paymentv1connect.NewPaymentHandler(payment, opts...))
+	mux.Handle(paymentv1connect.NewPaymentServiceHandler(payment, opts...))
 	mux.Handle(expensev1connect.NewExpenseServiceHandler(expense, opts...))
 	mux.Handle(userv1connect.NewUserServiceHandler(user, opts...))
 
 	checker := grpchealth.NewStaticChecker(
-		paymentv1connect.PaymentName,
+		paymentv1connect.PaymentServiceName,
 		expensev1connect.ExpenseServiceName,
 		userv1connect.UserServiceName,
 	)
 	mux.Handle(grpchealth.NewHandler(checker, compress1KB))
 
 	reflector := grpcreflect.NewStaticReflector(
-		paymentv1connect.PaymentName,
+		paymentv1connect.PaymentServiceName,
 		expensev1connect.ExpenseServiceName,
 		userv1connect.UserServiceName,
 	)

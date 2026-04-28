@@ -2,50 +2,71 @@ syntax = "proto3";
 
 package rpc.expense.v1;
 
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "google/type/money.proto";
-import "google/api/annotations.proto";
 
-// Expense resource
+// Expense is a single recorded expense entry for a user.
 message Expense {
-  string id = 1;                         // Server-generated ID
-  string user_id = 2;                    // Owner of the expense
-  google.type.Money amount = 3;          // Amount and currency
-  string category = 4;                   // Category label
-  string description = 5;                // Optional description
+  // Output only. Server-generated identifier.
+  string id = 1;
+  // Owner of the expense.
+  string user_id = 2;
+  // Amount and currency.
+  google.type.Money amount = 3;
+  // Category label.
+  string category = 4;
+  // Optional description.
+  string description = 5;
+  // Output only. Creation timestamp (AIP-142).
   google.protobuf.Timestamp create_time = 6;
+  // Output only. Last-modified timestamp (AIP-142).
   google.protobuf.Timestamp update_time = 7;
 }
 
+// CreateExpenseRequest creates a new expense. Server-managed fields on the
+// embedded Expense (id, create_time, update_time) are ignored.
 message CreateExpenseRequest {
-  Expense expense = 1; // Required: user_id, amount
+  // Required. Must include user_id and amount.
+  Expense expense = 1;
 }
 
 message GetExpenseRequest {
-  string id = 1; // Required
+  // Required. The expense id to fetch.
+  string id = 1;
 }
 
 message ListExpensesRequest {
-  string user_id = 1; // Optional filter by user
+  // Optional filter: return only expenses for this user.
+  string user_id = 1;
+  // Maximum number of expenses to return. Server may cap this value.
   int32 page_size = 2;
+  // Opaque pagination token from a previous response.
   string page_token = 3;
 }
 
 message ListExpensesResponse {
   repeated Expense expenses = 1;
+  // Token to retrieve the next page, or empty if there are no more results.
   string next_page_token = 2;
 }
 
 message UpdateExpenseRequest {
-  Expense expense = 1;                   // Must include id
+  // Required. The expense to update; must include id. Only fields listed in
+  // update_mask are applied.
+  Expense expense = 1;
+  // Supported paths: category, description, amount.
   google.protobuf.FieldMask update_mask = 2;
 }
 
 message DeleteExpenseRequest {
-  string id = 1; // Required
+  // Required. The expense id to delete.
+  string id = 1;
 }
 
+// ExpenseService provides CRUD over Expense resources.
 service ExpenseService {
   rpc CreateExpense(CreateExpenseRequest) returns (Expense) {
     option (google.api.http) = {
@@ -73,10 +94,11 @@ service ExpenseService {
     };
   }
 
-  rpc DeleteExpense(DeleteExpenseRequest) returns (.google.protobuf.Timestamp) {
+  // DeleteExpense removes the expense. Returns Empty on success (AIP-135);
+  // codes.NotFound if no row matched.
+  rpc DeleteExpense(DeleteExpenseRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v1/expenses/{id}"
     };
   }
 }
-

@@ -6,7 +6,7 @@ import (
 	"connectrpc.com/connect"
 	expensev1 "github.com/grpc-buf/internal/gen/proto/expense"
 	"github.com/grpc-buf/internal/postgres"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // ExpenseService exposes expense CRUD as Connect handlers.
@@ -15,7 +15,7 @@ type ExpenseService interface {
 	GetExpense(ctx context.Context, req *connect.Request[expensev1.GetExpenseRequest]) (*connect.Response[expensev1.Expense], error)
 	ListExpenses(ctx context.Context, req *connect.Request[expensev1.ListExpensesRequest]) (*connect.Response[expensev1.ListExpensesResponse], error)
 	UpdateExpense(ctx context.Context, req *connect.Request[expensev1.UpdateExpenseRequest]) (*connect.Response[expensev1.Expense], error)
-	DeleteExpense(ctx context.Context, req *connect.Request[expensev1.DeleteExpenseRequest]) (*connect.Response[timestamppb.Timestamp], error)
+	DeleteExpense(ctx context.Context, req *connect.Request[expensev1.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error)
 }
 
 type expenseService struct {
@@ -43,6 +43,6 @@ func (s *expenseService) UpdateExpense(ctx context.Context, req *connect.Request
 	return s.store.UpdateExpense(ctx, req)
 }
 
-func (s *expenseService) DeleteExpense(ctx context.Context, req *connect.Request[expensev1.DeleteExpenseRequest]) (*connect.Response[timestamppb.Timestamp], error) {
+func (s *expenseService) DeleteExpense(ctx context.Context, req *connect.Request[expensev1.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error) {
 	return s.store.DeleteExpense(ctx, req)
 }

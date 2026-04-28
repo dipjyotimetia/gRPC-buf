@@ -13,14 +13,20 @@ issues:
 linters:
   disable-all: true
   enable:
+    - bodyclose
+    - contextcheck
     - errcheck
+    - errorlint
+    - gofmt
+    - gosimple
     - govet
     - ineffassign
+    - misspell
+    - noctx
+    - revive
+    - sqlclosecheck
     - staticcheck
     - unused
-    - gosimple
-    - misspell
-    - revive
 
 linters-settings:
   revive:
