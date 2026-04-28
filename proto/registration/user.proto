@@ -5,20 +5,27 @@ package rpc.user.v1;
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 
+// UserService manages account registration and authentication.
+// RegisterUser and LoginUser use the AIP-136 custom-method convention
+// (verb suffix) because they are not REST resource creates.
 message RegisterRequest {
-  string email = 1;        // Required
-  string password = 2;     // Required
+  string email = 1;      // Required
+  // Write-only plaintext password. MUST NOT be logged or echoed in responses.
+  string password = 2;   // Required
   string first_name = 3;
   string last_name = 4;
 }
 
 message RegisterResponse {
+  // Server-generated user identifier.
   string id = 1;
-  google.protobuf.Timestamp created_at = 2;
+  // Creation timestamp (AIP-142: create_time).
+  google.protobuf.Timestamp create_time = 2;
 }
 
 message LoginRequest {
   string email = 1;      // Required
+  // Write-only plaintext password. MUST NOT be logged or echoed in responses.
   string password = 2;   // Required
 }
 

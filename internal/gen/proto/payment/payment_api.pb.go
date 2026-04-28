@@ -73,15 +73,15 @@ func (PaymentStatus) EnumDescriptor() ([]byte, []int) {
 	return file_payment_payment_api_proto_rawDescGZIP(), []int{0}
 }
 
-// CardType enum represents different types of payment cards
+// CardType represents different types of payment cards.
 type CardType int32
 
 const (
-	CardType_CARD_TYPE_UNSPECIFIED CardType = 0 // Unspecified
-	CardType_CARD_TYPE_DEBIT       CardType = 1 // Debit Card
-	CardType_CARD_TYPE_CREDIT      CardType = 2 // Credit Card
-	CardType_CARD_TYPE_MASTERCARD  CardType = 3 // Master Card
-	CardType_CARD_TYPE_REWARD      CardType = 4 // Reward Card
+	CardType_CARD_TYPE_UNSPECIFIED CardType = 0
+	CardType_CARD_TYPE_DEBIT       CardType = 1
+	CardType_CARD_TYPE_CREDIT      CardType = 2
+	CardType_CARD_TYPE_MASTERCARD  CardType = 3
+	CardType_CARD_TYPE_REWARD      CardType = 4
 )
 
 // Enum value maps for CardType.
@@ -129,13 +129,21 @@ func (CardType) EnumDescriptor() ([]byte, []int) {
 	return file_payment_payment_api_proto_rawDescGZIP(), []int{1}
 }
 
-// Invoice information
+// Invoice resource.
 type Invoice struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                                     // Unique identifier for the invoice
-	InvoiceName   string                 `protobuf:"bytes,2,opt,name=invoice_name,json=invoiceName,proto3" json:"invoice_name,omitempty"` // Invoice name
-	Amount        *money.Money           `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`                              // Invoice amount
-	Paid          bool                   `protobuf:"varint,4,opt,name=paid,proto3" json:"paid,omitempty"`                                 // Indicates if the invoice is paid
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Output only. Server-generated identifier.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Human-readable invoice name.
+	InvoiceName string `protobuf:"bytes,2,opt,name=invoice_name,json=invoiceName,proto3" json:"invoice_name,omitempty"`
+	// Amount and currency (AIP-140).
+	Amount *money.Money `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`
+	// Whether the invoice has been paid.
+	Paid bool `protobuf:"varint,4,opt,name=paid,proto3" json:"paid,omitempty"`
+	// Output only. Creation timestamp (AIP-142).
+	CreateTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	// Output only. Last-modified timestamp (AIP-142).
+	UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -170,11 +178,11 @@ func (*Invoice) Descriptor() ([]byte, []int) {
 	return file_payment_payment_api_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Invoice) GetId() int64 {
+func (x *Invoice) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *Invoice) GetInvoiceName() string {
@@ -198,22 +206,143 @@ func (x *Invoice) GetPaid() bool {
 	return false
 }
 
-// PaymentRequest contains payment information for processing a payment
+func (x *Invoice) GetCreateTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreateTime
+	}
+	return nil
+}
+
+func (x *Invoice) GetUpdateTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdateTime
+	}
+	return nil
+}
+
+type MarkInvoicePaidRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Required. The invoice id to mark paid.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkInvoicePaidRequest) Reset() {
+	*x = MarkInvoicePaidRequest{}
+	mi := &file_payment_payment_api_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkInvoicePaidRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkInvoicePaidRequest) ProtoMessage() {}
+
+func (x *MarkInvoicePaidRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_payment_payment_api_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkInvoicePaidRequest.ProtoReflect.Descriptor instead.
+func (*MarkInvoicePaidRequest) Descriptor() ([]byte, []int) {
+	return file_payment_payment_api_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *MarkInvoicePaidRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type PayInvoiceRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Required. The invoice id to pay.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Required. Opaque token referencing a stored/tokenized card.
+	CardToken     string `protobuf:"bytes,2,opt,name=card_token,json=cardToken,proto3" json:"card_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PayInvoiceRequest) Reset() {
+	*x = PayInvoiceRequest{}
+	mi := &file_payment_payment_api_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PayInvoiceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PayInvoiceRequest) ProtoMessage() {}
+
+func (x *PayInvoiceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_payment_payment_api_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PayInvoiceRequest.ProtoReflect.Descriptor instead.
+func (*PayInvoiceRequest) Descriptor() ([]byte, []int) {
+	return file_payment_payment_api_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *PayInvoiceRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *PayInvoiceRequest) GetCardToken() string {
+	if x != nil {
+		return x.CardToken
+	}
+	return ""
+}
+
+// PaymentRequest contains payment information for processing a payment.
+// Card numbers are NEVER sent here; callers pass a card_token obtained from a
+// PCI-compliant vault or tokenization service.
 type PaymentRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	CardNo         int64                  `protobuf:"varint,1,opt,name=card_no,json=cardNo,proto3" json:"card_no,omitempty"`                        // Card number
-	Card           CardType               `protobuf:"varint,2,opt,name=card,proto3,enum=rpc.payment.v1.CardType" json:"card,omitempty"`             // Card type
-	Name           string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`                                           // Card holder's name
-	AddressLines   []string               `protobuf:"bytes,4,rep,name=address_lines,json=addressLines,proto3" json:"address_lines,omitempty"`       // Card holder's address
-	Amount         float32                `protobuf:"fixed32,5,opt,name=amount,proto3" json:"amount,omitempty"`                                     // Total payment amount
-	PaymentCreated *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=payment_created,json=paymentCreated,proto3" json:"payment_created,omitempty"` // Timestamp for when the payment was created
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Required. Opaque token referencing a tokenized card.
+	CardToken string `protobuf:"bytes,1,opt,name=card_token,json=cardToken,proto3" json:"card_token,omitempty"`
+	// Required. Card type (informational).
+	Card CardType `protobuf:"varint,2,opt,name=card,proto3,enum=rpc.payment.v1.CardType" json:"card,omitempty"`
+	// Cardholder name.
+	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// Cardholder address lines.
+	AddressLines []string `protobuf:"bytes,4,rep,name=address_lines,json=addressLines,proto3" json:"address_lines,omitempty"`
+	// Required. Amount to charge (AIP-140).
+	Amount *money.Money `protobuf:"bytes,5,opt,name=amount,proto3" json:"amount,omitempty"`
+	// Timestamp for when the payment was created.
+	PaymentCreated *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=payment_created,json=paymentCreated,proto3" json:"payment_created,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
 func (x *PaymentRequest) Reset() {
 	*x = PaymentRequest{}
-	mi := &file_payment_payment_api_proto_msgTypes[1]
+	mi := &file_payment_payment_api_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -225,7 +354,7 @@ func (x *PaymentRequest) String() string {
 func (*PaymentRequest) ProtoMessage() {}
 
 func (x *PaymentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_payment_payment_api_proto_msgTypes[1]
+	mi := &file_payment_payment_api_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -238,14 +367,14 @@ func (x *PaymentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PaymentRequest.ProtoReflect.Descriptor instead.
 func (*PaymentRequest) Descriptor() ([]byte, []int) {
-	return file_payment_payment_api_proto_rawDescGZIP(), []int{1}
+	return file_payment_payment_api_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *PaymentRequest) GetCardNo() int64 {
+func (x *PaymentRequest) GetCardToken() string {
 	if x != nil {
-		return x.CardNo
+		return x.CardToken
 	}
-	return 0
+	return ""
 }
 
 func (x *PaymentRequest) GetCard() CardType {
@@ -269,11 +398,11 @@ func (x *PaymentRequest) GetAddressLines() []string {
 	return nil
 }
 
-func (x *PaymentRequest) GetAmount() float32 {
+func (x *PaymentRequest) GetAmount() *money.Money {
 	if x != nil {
 		return x.Amount
 	}
-	return 0
+	return nil
 }
 
 func (x *PaymentRequest) GetPaymentCreated() *timestamppb.Timestamp {
@@ -283,18 +412,19 @@ func (x *PaymentRequest) GetPaymentCreated() *timestamppb.Timestamp {
 	return nil
 }
 
-// PaymentResponse returns the result of a payment request
+// PaymentResponse returns the result of a payment request.
+// On failure the server returns a non-OK gRPC status instead of an in-band
+// error message.
 type PaymentResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        PaymentStatus          `protobuf:"varint,1,opt,name=status,proto3,enum=rpc.payment.v1.PaymentStatus" json:"status,omitempty"`
-	Error         string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"` // Payment error message (if any)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PaymentResponse) Reset() {
 	*x = PaymentResponse{}
-	mi := &file_payment_payment_api_proto_msgTypes[2]
+	mi := &file_payment_payment_api_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -306,7 +436,7 @@ func (x *PaymentResponse) String() string {
 func (*PaymentResponse) ProtoMessage() {}
 
 func (x *PaymentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_payment_payment_api_proto_msgTypes[2]
+	mi := &file_payment_payment_api_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -319,7 +449,7 @@ func (x *PaymentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PaymentResponse.ProtoReflect.Descriptor instead.
 func (*PaymentResponse) Descriptor() ([]byte, []int) {
-	return file_payment_payment_api_proto_rawDescGZIP(), []int{2}
+	return file_payment_payment_api_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PaymentResponse) GetStatus() PaymentStatus {
@@ -329,70 +459,36 @@ func (x *PaymentResponse) GetStatus() PaymentStatus {
 	return PaymentStatus_PAYMENT_STATUS_UNSPECIFIED
 }
 
-func (x *PaymentResponse) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
-}
-
-type Empty struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Empty) Reset() {
-	*x = Empty{}
-	mi := &file_payment_payment_api_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Empty) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Empty) ProtoMessage() {}
-
-func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_payment_payment_api_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
-func (*Empty) Descriptor() ([]byte, []int) {
-	return file_payment_payment_api_proto_rawDescGZIP(), []int{3}
-}
-
 var File_payment_payment_api_proto protoreflect.FileDescriptor
 
 const file_payment_payment_api_proto_rawDesc = "" +
 	"\n" +
-	"\x19payment/payment_api.proto\x12\x0erpc.payment.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x17google/type/money.proto\"|\n" +
+	"\x19payment/payment_api.proto\x12\x0erpc.payment.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17google/type/money.proto\"\xf6\x01\n" +
 	"\aInvoice\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12!\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\finvoice_name\x18\x02 \x01(\tR\vinvoiceName\x12*\n" +
 	"\x06amount\x18\x03 \x01(\v2\x12.google.type.MoneyR\x06amount\x12\x12\n" +
-	"\x04paid\x18\x04 \x01(\bR\x04paid\"\xed\x01\n" +
-	"\x0ePaymentRequest\x12\x17\n" +
-	"\acard_no\x18\x01 \x01(\x03R\x06cardNo\x12,\n" +
+	"\x04paid\x18\x04 \x01(\bR\x04paid\x12;\n" +
+	"\vcreate_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"createTime\x12;\n" +
+	"\vupdate_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"updateTime\"(\n" +
+	"\x16MarkInvoicePaidRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"B\n" +
+	"\x11PayInvoiceRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
+	"\n" +
+	"card_token\x18\x02 \x01(\tR\tcardToken\"\x87\x02\n" +
+	"\x0ePaymentRequest\x12\x1d\n" +
+	"\n" +
+	"card_token\x18\x01 \x01(\tR\tcardToken\x12,\n" +
 	"\x04card\x18\x02 \x01(\x0e2\x18.rpc.payment.v1.CardTypeR\x04card\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12#\n" +
-	"\raddress_lines\x18\x04 \x03(\tR\faddressLines\x12\x16\n" +
-	"\x06amount\x18\x05 \x01(\x02R\x06amount\x12C\n" +
-	"\x0fpayment_created\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x0epaymentCreated\"^\n" +
+	"\raddress_lines\x18\x04 \x03(\tR\faddressLines\x12*\n" +
+	"\x06amount\x18\x05 \x01(\v2\x12.google.type.MoneyR\x06amount\x12C\n" +
+	"\x0fpayment_created\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x0epaymentCreated\"H\n" +
 	"\x0fPaymentResponse\x125\n" +
-	"\x06status\x18\x01 \x01(\x0e2\x1d.rpc.payment.v1.PaymentStatusR\x06status\x12\x14\n" +
-	"\x05error\x18\x02 \x01(\tR\x05error\"\a\n" +
-	"\x05Empty*c\n" +
+	"\x06status\x18\x01 \x01(\x0e2\x1d.rpc.payment.v1.PaymentStatusR\x06status*c\n" +
 	"\rPaymentStatus\x12\x1e\n" +
 	"\x1aPAYMENT_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13PAYMENT_STATUS_PAID\x10\x01\x12\x19\n" +
@@ -402,12 +498,12 @@ const file_payment_payment_api_proto_rawDesc = "" +
 	"\x0fCARD_TYPE_DEBIT\x10\x01\x12\x14\n" +
 	"\x10CARD_TYPE_CREDIT\x10\x02\x12\x18\n" +
 	"\x14CARD_TYPE_MASTERCARD\x10\x03\x12\x14\n" +
-	"\x10CARD_TYPE_REWARD\x10\x042\xb8\x02\n" +
-	"\aPayment\x12k\n" +
-	"\vMakePayment\x12\x1e.rpc.payment.v1.PaymentRequest\x1a\x1f.rpc.payment.v1.PaymentResponse\"\x1b\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/payment:make\x12d\n" +
-	"\x0fMarkInvoicePaid\x12\x17.rpc.payment.v1.Invoice\x1a\x17.rpc.payment.v1.Invoice\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/v1/invoice:markPaid\x12Z\n" +
+	"\x10CARD_TYPE_REWARD\x10\x042\xd8\x02\n" +
+	"\x0ePaymentService\x12k\n" +
+	"\vMakePayment\x12\x1e.rpc.payment.v1.PaymentRequest\x1a\x1f.rpc.payment.v1.PaymentResponse\"\x1b\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/payment:make\x12s\n" +
+	"\x0fMarkInvoicePaid\x12&.rpc.payment.v1.MarkInvoicePaidRequest\x1a\x17.rpc.payment.v1.Invoice\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/v1/invoice:markPaid\x12d\n" +
 	"\n" +
-	"PayInvoice\x12\x17.rpc.payment.v1.Invoice\x1a\x17.rpc.payment.v1.Invoice\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/v1/invoice:payB\xb9\x01\n" +
+	"PayInvoice\x12!.rpc.payment.v1.PayInvoiceRequest\x1a\x17.rpc.payment.v1.Invoice\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/v1/invoice:payB\xb9\x01\n" +
 	"\x12com.rpc.payment.v1B\x0fPaymentApiProtoP\x01Z8github.com/grpc-buf/internal/gen/proto/payment;paymentv1\xa2\x02\x03RPX\xaa\x02\x0eRpc.Payment.V1\xca\x02\x0eRpc\\Payment\\V1\xe2\x02\x1aRpc\\Payment\\V1\\GPBMetadata\xea\x02\x10Rpc::Payment::V1b\x06proto3"
 
 var (
@@ -423,33 +519,37 @@ func file_payment_payment_api_proto_rawDescGZIP() []byte {
 }
 
 var file_payment_payment_api_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_payment_payment_api_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_payment_payment_api_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_payment_payment_api_proto_goTypes = []any{
-	(PaymentStatus)(0),            // 0: rpc.payment.v1.PaymentStatus
-	(CardType)(0),                 // 1: rpc.payment.v1.CardType
-	(*Invoice)(nil),               // 2: rpc.payment.v1.Invoice
-	(*PaymentRequest)(nil),        // 3: rpc.payment.v1.PaymentRequest
-	(*PaymentResponse)(nil),       // 4: rpc.payment.v1.PaymentResponse
-	(*Empty)(nil),                 // 5: rpc.payment.v1.Empty
-	(*money.Money)(nil),           // 6: google.type.Money
-	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
+	(PaymentStatus)(0),             // 0: rpc.payment.v1.PaymentStatus
+	(CardType)(0),                  // 1: rpc.payment.v1.CardType
+	(*Invoice)(nil),                // 2: rpc.payment.v1.Invoice
+	(*MarkInvoicePaidRequest)(nil), // 3: rpc.payment.v1.MarkInvoicePaidRequest
+	(*PayInvoiceRequest)(nil),      // 4: rpc.payment.v1.PayInvoiceRequest
+	(*PaymentRequest)(nil),         // 5: rpc.payment.v1.PaymentRequest
+	(*PaymentResponse)(nil),        // 6: rpc.payment.v1.PaymentResponse
+	(*money.Money)(nil),            // 7: google.type.Money
+	(*timestamppb.Timestamp)(nil),  // 8: google.protobuf.Timestamp
 }
 var file_payment_payment_api_proto_depIdxs = []int32{
-	6, // 0: rpc.payment.v1.Invoice.amount:type_name -> google.type.Money
-	1, // 1: rpc.payment.v1.PaymentRequest.card:type_name -> rpc.payment.v1.CardType
-	7, // 2: rpc.payment.v1.PaymentRequest.payment_created:type_name -> google.protobuf.Timestamp
-	0, // 3: rpc.payment.v1.PaymentResponse.status:type_name -> rpc.payment.v1.PaymentStatus
-	3, // 4: rpc.payment.v1.Payment.MakePayment:input_type -> rpc.payment.v1.PaymentRequest
-	2, // 5: rpc.payment.v1.Payment.MarkInvoicePaid:input_type -> rpc.payment.v1.Invoice
-	2, // 6: rpc.payment.v1.Payment.PayInvoice:input_type -> rpc.payment.v1.Invoice
-	4, // 7: rpc.payment.v1.Payment.MakePayment:output_type -> rpc.payment.v1.PaymentResponse
-	2, // 8: rpc.payment.v1.Payment.MarkInvoicePaid:output_type -> rpc.payment.v1.Invoice
-	2, // 9: rpc.payment.v1.Payment.PayInvoice:output_type -> rpc.payment.v1.Invoice
-	7, // [7:10] is the sub-list for method output_type
-	4, // [4:7] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	7,  // 0: rpc.payment.v1.Invoice.amount:type_name -> google.type.Money
+	8,  // 1: rpc.payment.v1.Invoice.create_time:type_name -> google.protobuf.Timestamp
+	8,  // 2: rpc.payment.v1.Invoice.update_time:type_name -> google.protobuf.Timestamp
+	1,  // 3: rpc.payment.v1.PaymentRequest.card:type_name -> rpc.payment.v1.CardType
+	7,  // 4: rpc.payment.v1.PaymentRequest.amount:type_name -> google.type.Money
+	8,  // 5: rpc.payment.v1.PaymentRequest.payment_created:type_name -> google.protobuf.Timestamp
+	0,  // 6: rpc.payment.v1.PaymentResponse.status:type_name -> rpc.payment.v1.PaymentStatus
+	5,  // 7: rpc.payment.v1.PaymentService.MakePayment:input_type -> rpc.payment.v1.PaymentRequest
+	3,  // 8: rpc.payment.v1.PaymentService.MarkInvoicePaid:input_type -> rpc.payment.v1.MarkInvoicePaidRequest
+	4,  // 9: rpc.payment.v1.PaymentService.PayInvoice:input_type -> rpc.payment.v1.PayInvoiceRequest
+	6,  // 10: rpc.payment.v1.PaymentService.MakePayment:output_type -> rpc.payment.v1.PaymentResponse
+	2,  // 11: rpc.payment.v1.PaymentService.MarkInvoicePaid:output_type -> rpc.payment.v1.Invoice
+	2,  // 12: rpc.payment.v1.PaymentService.PayInvoice:output_type -> rpc.payment.v1.Invoice
+	10, // [10:13] is the sub-list for method output_type
+	7,  // [7:10] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_payment_payment_api_proto_init() }
@@ -463,7 +563,7 @@ func file_payment_payment_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_payment_payment_api_proto_rawDesc), len(file_payment_payment_api_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

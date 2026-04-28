@@ -11,6 +11,7 @@ import (
 	"connectrpc.com/connect"
 	userv1 "github.com/grpc-buf/internal/gen/proto/registration"
 	"github.com/grpc-buf/internal/gen/proto/registration/userv1connect"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUsersRegister(t *testing.T) {
@@ -26,9 +27,7 @@ func TestUsersRegister(t *testing.T) {
 		LastName:  "Last",
 	})
 	res, err := client.RegisterUser(context.Background(), req)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	t.Log(res.Msg)
 }
 
@@ -43,8 +42,6 @@ func TestUsersLogin(t *testing.T) {
 		Password: "Password1",
 	})
 	res, err := client.LoginUser(context.Background(), req)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	t.Log(res.Msg)
 }

@@ -2,25 +2,29 @@ syntax = "proto3";
 
 package rpc.payment.v1;
 
-import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 import "google/type/money.proto";
 
-// Payment service provides methods for making payments and managing invoices
-service Payment {
+// PaymentService processes payments and manages invoices.
+// Card data MUST be tokenized upstream (e.g. via a PCI-compliant vault) and
+// referenced here by card_token; PANs never traverse this API.
+service PaymentService {
   rpc MakePayment(PaymentRequest) returns (PaymentResponse) {
     option (google.api.http) = {
       post: "/v1/payment:make"
       body: "*"
     };
   }
-  rpc MarkInvoicePaid(Invoice) returns (Invoice) {
+
+  rpc MarkInvoicePaid(MarkInvoicePaidRequest) returns (Invoice) {
     option (google.api.http) = {
       post: "/v1/invoice:markPaid"
       body: "*"
     };
   }
-  rpc PayInvoice(Invoice) returns (Invoice) {
+
+  rpc PayInvoice(PayInvoiceRequest) returns (Invoice) {
     option (google.api.http) = {
       post: "/v1/invoice:pay"
       body: "*"
@@ -28,28 +32,57 @@ service Payment {
   }
 }
 
-// Invoice information
+// Invoice resource.
 message Invoice {
-  int64 id = 1; // Unique identifier for the invoice
-  string invoice_name = 2; // Invoice name
-  google.type.Money amount = 3; // Invoice amount
-  bool paid = 4; // Indicates if the invoice is paid
+  // Output only. Server-generated identifier.
+  string id = 1;
+  // Human-readable invoice name.
+  string invoice_name = 2;
+  // Amount and currency (AIP-140).
+  google.type.Money amount = 3;
+  // Whether the invoice has been paid.
+  bool paid = 4;
+  // Output only. Creation timestamp (AIP-142).
+  google.protobuf.Timestamp create_time = 5;
+  // Output only. Last-modified timestamp (AIP-142).
+  google.protobuf.Timestamp update_time = 6;
 }
 
-// PaymentRequest contains payment information for processing a payment
+message MarkInvoicePaidRequest {
+  // Required. The invoice id to mark paid.
+  string id = 1;
+}
+
+message PayInvoiceRequest {
+  // Required. The invoice id to pay.
+  string id = 1;
+  // Required. Opaque token referencing a stored/tokenized card.
+  string card_token = 2;
+}
+
+// PaymentRequest contains payment information for processing a payment.
+// Card numbers are NEVER sent here; callers pass a card_token obtained from a
+// PCI-compliant vault or tokenization service.
 message PaymentRequest {
-  int64 card_no = 1; // Card number
-  CardType card = 2; // Card type
-  string name = 3; // Card holder's name
-  repeated string address_lines = 4; // Card holder's address
-  float amount = 5; // Total payment amount
-  google.protobuf.Timestamp payment_created = 6; // Timestamp for when the payment was created
+  // Required. Opaque token referencing a tokenized card.
+  string card_token = 1;
+  // Required. Card type (informational).
+  CardType card = 2;
+  // Cardholder name.
+  string name = 3;
+  // Cardholder address lines.
+  repeated string address_lines = 4;
+  // Required. Amount to charge (AIP-140).
+  google.type.Money amount = 5;
+  // Timestamp for when the payment was created.
+  google.protobuf.Timestamp payment_created = 6;
 }
 
-// PaymentResponse returns the result of a payment request
+// PaymentResponse returns the result of a payment request.
+// On failure the server returns a non-OK gRPC status instead of an in-band
+// error message.
 message PaymentResponse {
   PaymentStatus status = 1;
-  string error = 2; // Payment error message (if any)
 }
 
 enum PaymentStatus {
@@ -58,13 +91,11 @@ enum PaymentStatus {
   PAYMENT_STATUS_FAILED = 2;
 }
 
-// CardType enum represents different types of payment cards
+// CardType represents different types of payment cards.
 enum CardType {
-  CARD_TYPE_UNSPECIFIED = 0; // Unspecified
-  CARD_TYPE_DEBIT = 1;       // Debit Card
-  CARD_TYPE_CREDIT = 2;      // Credit Card
-  CARD_TYPE_MASTERCARD = 3;  // Master Card
-  CARD_TYPE_REWARD = 4;      // Reward Card
+  CARD_TYPE_UNSPECIFIED = 0;
+  CARD_TYPE_DEBIT = 1;
+  CARD_TYPE_CREDIT = 2;
+  CARD_TYPE_MASTERCARD = 3;
+  CARD_TYPE_REWARD = 4;
 }
-
-message Empty {}

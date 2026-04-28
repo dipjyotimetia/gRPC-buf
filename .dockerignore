@@ -1,0 +1,11 @@
+.git
+.github
+tests
+docs
+scripts
+*.md
+Dockerfile*
+docker-compose.yaml
+.golangci.yaml
+.gitignore
+.dockerignore

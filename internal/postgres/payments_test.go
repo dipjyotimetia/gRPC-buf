@@ -2,11 +2,11 @@ package postgres
 
 import "testing"
 
-func TestVerifyCard(t *testing.T) {
-	if VerifyCard(0) {
-		t.Fatalf("expected false for 0 card number")
+func TestVerifyCardToken(t *testing.T) {
+	if VerifyCardToken("") {
+		t.Fatalf("expected false for empty card token")
 	}
-	if !VerifyCard(1234) {
-		t.Fatalf("expected true for non-zero card number")
+	if !VerifyCardToken("tok_1234") {
+		t.Fatalf("expected true for non-empty card token")
 	}
 }

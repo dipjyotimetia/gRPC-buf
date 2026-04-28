@@ -1,9 +1,33 @@
 version: v2
 modules:
   - path: proto
-lint:
-  use:
-    - DEFAULT
-breaking:
-  use:
-    - FILE
+    lint:
+      use:
+        - STANDARD
+      except:
+        # Project uses packages like rpc.user.v1 under directories such as
+        # registration/ rather than rpc/user/v1/. Keep the existing layout.
+        - PACKAGE_DIRECTORY_MATCH
+      ignore:
+        # Vendored Google well-known API types live alongside project protos
+        # for offline generation; they predate buf style conventions.
+        - proto/google
+      ignore_only:
+        # Historical request/response shapes preserved for API stability.
+        # New RPCs should follow the standard <Method>Request/<Method>Response
+        # naming (AIP-121).
+        RPC_REQUEST_STANDARD_NAME:
+          - proto/registration/user.proto
+          - proto/payment/payment_api.proto
+        RPC_RESPONSE_STANDARD_NAME:
+          - proto/registration/user.proto
+          - proto/payment/payment_api.proto
+          - proto/expense/expense.proto
+        RPC_REQUEST_RESPONSE_UNIQUE:
+          - proto/payment/payment_api.proto
+          - proto/expense/expense.proto
+    breaking:
+      use:
+        - FILE
+      ignore:
+        - proto/google

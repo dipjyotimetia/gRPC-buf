@@ -1,40 +1,51 @@
 package server
 
 import (
-    "context"
-    "encoding/json"
-    "errors"
-    "github.com/grpc-buf/internal/transport/middleware/ratelimit"
-    "log/slog"
-    "net/http"
-    "os"
-    "os/signal"
-    "slices"
-    "strings"
-    "syscall"
-    "time"
+	"context"
+	"encoding/json"
+	"errors"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"slices"
+	"strconv"
+	"strings"
+	"syscall"
+	"time"
 
-    "github.com/grpc-buf/internal/config"
-    "github.com/grpc-buf/internal/postgres"
-    "github.com/grpc-buf/internal/service"
-    httptransport "github.com/grpc-buf/internal/transport/http"
-    authmw "github.com/grpc-buf/internal/transport/middleware/auth"
-    "connectrpc.com/connect"
-    "github.com/grpc-buf/internal/version"
-    "github.com/grpc-buf/internal/security"
-    "github.com/rs/cors"
-    "golang.org/x/net/http2"
-    "golang.org/x/net/http2/h2c"
-    "strconv"
+	"connectrpc.com/connect"
+	"github.com/grpc-buf/internal/config"
+	"github.com/grpc-buf/internal/postgres"
+	"github.com/grpc-buf/internal/security"
+	"github.com/grpc-buf/internal/service"
+	httptransport "github.com/grpc-buf/internal/transport/http"
+	authmw "github.com/grpc-buf/internal/transport/middleware/auth"
+	"github.com/grpc-buf/internal/transport/middleware/ratelimit"
+	"github.com/grpc-buf/internal/version"
+	"github.com/rs/cors"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
+const (
+	shutdownTimeout = 10 * time.Second
+	readyzTimeout   = 2 * time.Second
+)
+
+// Run starts the HTTP/gRPC server and blocks until SIGINT/SIGTERM is received
+// or the underlying listener fails. cfg must be non-nil; callers should obtain
+// it via config.Bootstrap.
 func Run(cfg *config.Config) error {
-	// Initialize dependencies at runtime using config
-	var db postgres.DataStore
-	if cfg != nil {
-		db = postgres.NewDatabaseConnectionFromConfig(cfg)
-	} else {
-		db = postgres.NewDatabaseConnection()
+	if cfg == nil {
+		return errors.New("server.Run: cfg is nil")
+	}
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
+	db, err := postgres.NewDatabaseConnectionFromConfig(ctx, cfg)
+	if err != nil {
+		return err
 	}
 	defer db.Close()
 
@@ -42,109 +53,112 @@ func Run(cfg *config.Config) error {
 	userService := service.NewUserService(db)
 	expenseService := service.NewExpenseService(db)
 
-    // Install middleware (rate limiting) from config
-    loginRPS := 5
-    loginBurst := 10
-    if cfg != nil {
-        if cfg.Server.LoginRPS > 0 {
-            loginRPS = cfg.Server.LoginRPS
-        }
-        if cfg.Server.LoginBurst > 0 {
-            loginBurst = cfg.Server.LoginBurst
-        }
-    }
-    limiter := ratelimit.NewLoginInterceptor(float64(loginRPS), loginBurst)
-    interceptors := []connect.Interceptor{limiter}
-    // Auth from config (preferred), else env fallback
-    var verifier *security.Verifier
-    var vErr error
-    if cfg != nil {
-        verifier, vErr = security.NewVerifierFromConfig(cfg.Security)
-    } else {
-        verifier, vErr = security.NewVerifierFromEnv()
-    }
-    if vErr == nil && verifier != nil {
-        skip := []string{"/RegisterUser", "/LoginUser"}
-        if cfg != nil && len(cfg.Security.AuthSkipSuffixes) > 0 {
-            skip = cfg.Security.AuthSkipSuffixes
-        }
-        jwtAuth := authmw.NewJWTAuthInterceptor(verifier, skip)
-        interceptors = append(interceptors, jwtAuth)
-    } else {
-        slog.Warn("JWT auth disabled: missing secret")
-    }
+	interceptors := buildInterceptors(cfg)
 
-    mux := httptransport.NewMuxWithInterceptors(
-        paymentService,
-        userService,
-        expenseService,
-        interceptors...,
-    )
-    // Wrap with a root mux to add readiness and version endpoints
-    root := http.NewServeMux()
-    root.Handle("/readyz", readyHandler(db))
-    root.HandleFunc("/version", func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Content-Type", "application/json")
-        _ = json.NewEncoder(w).Encode(version.Get())
-    })
-    root.Handle("/", mux)
-    // Use preconfigured global logger (set in main) and log startup
-    slog.Info("Starting gRPC server")
+	mux := httptransport.NewMuxWithInterceptors(
+		paymentService,
+		userService,
+		expenseService,
+		interceptors...,
+	)
+	root := http.NewServeMux()
+	root.Handle("/readyz", readyHandler(db))
+	root.HandleFunc("/version", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(version.Get()); err != nil {
+			slog.Warn("failed to encode /version response", "error", err)
+		}
+	})
+	root.Handle("/", mux)
 
-	ctx := context.Background()
+	srv := &http.Server{
+		Addr: listenAddr(cfg),
+		Handler: h2c.NewHandler(
+			newCORS(cfg).Handler(root),
+			&http2.Server{},
+		),
+		ReadHeaderTimeout: time.Second,
+		ReadTimeout:       5 * time.Minute,
+		WriteTimeout:      5 * time.Minute,
+		MaxHeaderBytes:    8 * 1024, // 8KiB
+	}
 
-    // Determine address: prefer Cloud Run $PORT env, else config, else default 8080
-    addr := ":8080"
-    if p := strings.TrimSpace(os.Getenv("PORT")); p != "" { // Cloud Run sets PORT
-        addr = ":" + p
-    } else if cfg != nil && cfg.Server.Port != 0 {
-        addr = ":" + strconv.Itoa(cfg.Server.Port)
-    }
-    srv := &http.Server{
-        Addr: addr,
-        Handler: h2c.NewHandler(
-            newCORS(cfg).Handler(root),
-            &http2.Server{},
-        ),
-        ReadHeaderTimeout: time.Second,
-        ReadTimeout:       5 * time.Minute,
-        WriteTimeout:      5 * time.Minute,
-        MaxHeaderBytes:    8 * 1024, // 8KiB
-    }
+	slog.Info("Starting gRPC server", "addr", srv.Addr)
 
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
-
+	serveErr := make(chan error, 1)
 	go func() {
-        if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-            slog.Error("http listen and serve failed", "error", err)
-        }
-    }()
+		err := srv.ListenAndServe()
+		if errors.Is(err, http.ErrServerClosed) {
+			err = nil
+		}
+		// Buffered channel guarantees the send never blocks, even if nobody
+		// reads (e.g. Shutdown errored and we returned early).
+		serveErr <- err
+	}()
 
-	<-signals
+	select {
+	case <-ctx.Done():
+		slog.Info("shutdown signal received")
+	case err := <-serveErr:
+		return err
+	}
 
-	shutdownCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer shutdownCancel()
+	shutdownErr := srv.Shutdown(shutdownCtx)
+	if shutdownErr != nil {
+		slog.Error("http shutdown failed", "error", shutdownErr)
+	}
+	if err := <-serveErr; err != nil {
+		return err
+	}
+	return shutdownErr
+}
 
-    if err := srv.Shutdown(shutdownCtx); err != nil {
-        slog.Error("http shutdown failed", "error", err)
-    }
-    return nil
+func buildInterceptors(cfg *config.Config) []connect.Interceptor {
+	loginRPS := 5
+	loginBurst := 10
+	if cfg.Server.LoginRPS > 0 {
+		loginRPS = cfg.Server.LoginRPS
+	}
+	if cfg.Server.LoginBurst > 0 {
+		loginBurst = cfg.Server.LoginBurst
+	}
+	interceptors := []connect.Interceptor{
+		ratelimit.NewLoginInterceptor(float64(loginRPS), loginBurst),
+	}
+
+	verifier, err := security.NewVerifierFromConfig(cfg.Security)
+	if err != nil || verifier == nil {
+		slog.Warn("JWT auth disabled: missing secret")
+		return interceptors
+	}
+	skip := cfg.Security.AuthSkipSuffixes
+	if len(skip) == 0 {
+		skip = []string{"/RegisterUser", "/LoginUser"}
+	}
+	return append(interceptors, authmw.NewJWTAuthInterceptor(verifier, skip))
+}
+
+// listenAddr resolves the bind address from (in order): Cloud Run's PORT,
+// cfg.Server.Port, or the default :8080.
+func listenAddr(cfg *config.Config) string {
+	if p := strings.TrimSpace(os.Getenv("PORT")); p != "" {
+		return ":" + p
+	}
+	if cfg.Server.Port != 0 {
+		return ":" + strconv.Itoa(cfg.Server.Port)
+	}
+	return ":8080"
 }
 
 func newCORS(cfg *config.Config) *cors.Cors {
-    // Use config-driven allowed origins. In dev, allow all if unset.
-    origins := []string{}
-    if cfg != nil && len(cfg.Server.CORSAllowedOrigins) > 0 {
-        origins = append(origins, cfg.Server.CORSAllowedOrigins...)
-    }
-    env := ""
-    if cfg != nil { env = strings.ToLower(strings.TrimSpace(cfg.Environment)) }
-    allowAll := env == "dev" && len(origins) == 0
-    // Treat literal "*" as allow-all in any env.
-    if slices.Contains(origins, "*") {
-        allowAll = true
-    }
+	origins := append([]string{}, cfg.Server.CORSAllowedOrigins...)
+	env := strings.ToLower(strings.TrimSpace(cfg.Environment))
+	allowAll := env == "dev" && len(origins) == 0
+	if slices.Contains(origins, "*") {
+		allowAll = true
+	}
 
 	return cors.New(cors.Options{
 		AllowedMethods: []string{
@@ -155,12 +169,12 @@ func newCORS(cfg *config.Config) *cors.Cors {
 			http.MethodPatch,
 			http.MethodDelete,
 		},
-        AllowOriginFunc: func(origin string) bool {
-            if allowAll {
-                return true
-            }
-            return slices.Contains(origins, origin)
-        },
+		AllowOriginFunc: func(origin string) bool {
+			if allowAll {
+				return true
+			}
+			return slices.Contains(origins, origin)
+		},
 		AllowedHeaders: []string{"*"},
 		ExposedHeaders: []string{
 			"Accept",
@@ -182,15 +196,15 @@ func newCORS(cfg *config.Config) *cors.Cors {
 // readyHandler returns HTTP 200 when dependencies are ready (DB ping).
 func readyHandler(db postgres.DataStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), readyzTimeout)
 		defer cancel()
 		if err := db.Ping(ctx); err != nil {
 			http.Error(w, "not ready", http.StatusServiceUnavailable)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
+		if _, err := w.Write([]byte("ok")); err != nil {
+			slog.Debug("readyz write failed", "error", err)
+		}
 	})
 }
-
-//

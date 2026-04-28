@@ -2,7 +2,9 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -12,9 +14,31 @@ import (
 	"google.golang.org/genproto/googleapis/type/money"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const nanosPerCent = 10_000_000
+
+func moneyToCents(m *money.Money) int64 {
+	if m == nil {
+		return 0
+	}
+	return m.GetUnits()*100 + int64(m.GetNanos())/nanosPerCent
+}
+
+func centsToMoney(cents int64, currency string) *money.Money {
+	units := cents / 100
+	rem := int32(cents % 100)
+	return &money.Money{
+		CurrencyCode: currency,
+		Units:        units,
+		Nanos:        rem * nanosPerCent,
+	}
+}
+
+// CreateExpense inserts a new expense row and returns it with its generated id
+// and timestamps.
 func (s *Store) CreateExpense(ctx context.Context, req *connect.Request[expensev1.CreateExpenseRequest]) (*connect.Response[expensev1.Expense], error) {
 	exp := req.Msg.GetExpense()
 	if exp == nil {
@@ -27,25 +51,22 @@ func (s *Store) CreateExpense(ctx context.Context, req *connect.Request[expensev
 		return nil, status.Error(codes.InvalidArgument, "amount currency_code is required")
 	}
 
-	var id string
-	var createTime time.Time
-	var updateTime time.Time
-
-	units := exp.GetAmount().GetUnits()
-	nanos := exp.GetAmount().GetNanos()
-	amountCents := units*100 + int64(nanos)/10_000_000 // 1e7 nanos per cent
-
+	var (
+		id                     string
+		createTime, updateTime time.Time
+	)
 	err := s.db.QueryRow(ctx,
 		`INSERT INTO expenses (user_id, amount_cents, currency_code, category, description)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING id, created_at, updated_at`,
-		exp.GetUserId(), amountCents, exp.GetAmount().GetCurrencyCode(), exp.GetCategory(), exp.GetDescription(),
+		exp.GetUserId(), moneyToCents(exp.GetAmount()), exp.GetAmount().GetCurrencyCode(), exp.GetCategory(), exp.GetDescription(),
 	).Scan(&id, &createTime, &updateTime)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create expense: %v", err)
+		slog.Error("create expense query failed", "error", err, "user_id", exp.GetUserId())
+		return nil, status.Error(codes.Internal, "failed to create expense")
 	}
 
-	resp := &expensev1.Expense{
+	return connect.NewResponse(&expensev1.Expense{
 		Id:          id,
 		UserId:      exp.GetUserId(),
 		Amount:      exp.GetAmount(),
@@ -53,10 +74,11 @@ func (s *Store) CreateExpense(ctx context.Context, req *connect.Request[expensev
 		Description: exp.GetDescription(),
 		CreateTime:  timestamppb.New(createTime),
 		UpdateTime:  timestamppb.New(updateTime),
-	}
-	return connect.NewResponse(resp), nil
+	}), nil
 }
 
+// GetExpense fetches a single expense by id. Returns codes.NotFound when the
+// row does not exist.
 func (s *Store) GetExpense(ctx context.Context, req *connect.Request[expensev1.GetExpenseRequest]) (*connect.Response[expensev1.Expense], error) {
 	id := strings.TrimSpace(req.Msg.GetId())
 	if id == "" {
@@ -73,23 +95,27 @@ func (s *Store) GetExpense(ctx context.Context, req *connect.Request[expensev1.G
          FROM expenses WHERE id=$1`, id,
 	).Scan(&userID, &amountCents, &currency, &category, &description, &createdAt, &updatedAt)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "expense not found: %v", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "expense not found")
+		}
+		slog.Error("get expense query failed", "error", err, "id", id)
+		return nil, status.Error(codes.Internal, "failed to get expense")
 	}
 
-	units := amountCents / 100
-	cents := amountCents % 100
-	resp := &expensev1.Expense{
+	return connect.NewResponse(&expensev1.Expense{
 		Id:          id,
 		UserId:      userID,
-		Amount:      &money.Money{CurrencyCode: currency, Units: units, Nanos: int32(cents) * 10_000_000},
+		Amount:      centsToMoney(amountCents, currency),
 		Category:    category,
 		Description: description,
 		CreateTime:  timestamppb.New(createdAt),
 		UpdateTime:  timestamppb.New(updatedAt),
-	}
-	return connect.NewResponse(resp), nil
+	}), nil
 }
 
+// ListExpenses returns a page of expenses ordered by creation time (newest
+// first), optionally filtered by user_id. Pagination uses opaque "o:<offset>"
+// tokens.
 func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1.ListExpensesRequest]) (*connect.Response[expensev1.ListExpensesResponse], error) {
 	userID := strings.TrimSpace(req.Msg.GetUserId())
 	pageSize := req.Msg.GetPageSize()
@@ -97,7 +123,6 @@ func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1
 		pageSize = 50
 	}
 
-	// Simple pagination using offset encoded in page_token
 	offset := 0
 	if req.Msg.GetPageToken() != "" {
 		if n, err := fmt.Sscanf(req.Msg.GetPageToken(), "o:%d", &offset); n != 1 || err != nil {
@@ -105,8 +130,10 @@ func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1
 		}
 	}
 
-	var rows pgx.Rows
-	var err error
+	var (
+		rows pgx.Rows
+		err  error
+	)
 	if userID == "" {
 		rows, err = s.db.Query(ctx,
 			`SELECT id, user_id, amount_cents, currency_code, category, description, created_at, updated_at
@@ -119,34 +146,35 @@ func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1
 		)
 	}
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "list query failed: %v", err)
+		slog.Error("list expenses query failed", "error", err, "user_id", userID)
+		return nil, status.Error(codes.Internal, "failed to list expenses")
 	}
 	defer rows.Close()
 
 	resp := &expensev1.ListExpensesResponse{}
-	for {
+	for rows.Next() {
 		var (
 			id, uid, currency, category, description string
 			amountCents                              int64
 			createdAt, updatedAt                     time.Time
 		)
-		if !rows.Next() {
-			break
-		}
 		if err := rows.Scan(&id, &uid, &amountCents, &currency, &category, &description, &createdAt, &updatedAt); err != nil {
-			return nil, status.Errorf(codes.Internal, "scan failed: %v", err)
+			slog.Error("list expenses scan failed", "error", err)
+			return nil, status.Error(codes.Internal, "failed to list expenses")
 		}
-		units := amountCents / 100
-		cents := amountCents % 100
 		resp.Expenses = append(resp.Expenses, &expensev1.Expense{
 			Id:          id,
 			UserId:      uid,
-			Amount:      &money.Money{CurrencyCode: currency, Units: units, Nanos: int32(cents) * 10_000_000},
+			Amount:      centsToMoney(amountCents, currency),
 			Category:    category,
 			Description: description,
 			CreateTime:  timestamppb.New(createdAt),
 			UpdateTime:  timestamppb.New(updatedAt),
 		})
+	}
+	if err := rows.Err(); err != nil {
+		slog.Error("list expenses iteration failed", "error", err)
+		return nil, status.Error(codes.Internal, "failed to list expenses")
 	}
 	if len(resp.Expenses) == int(pageSize) {
 		resp.NextPageToken = fmt.Sprintf("o:%d", offset+int(pageSize))
@@ -154,13 +182,14 @@ func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1
 	return connect.NewResponse(resp), nil
 }
 
+// UpdateExpense applies a field-mask update to an expense row. Supported
+// mask paths: category, description, amount.
 func (s *Store) UpdateExpense(ctx context.Context, req *connect.Request[expensev1.UpdateExpenseRequest]) (*connect.Response[expensev1.Expense], error) {
 	exp := req.Msg.GetExpense()
 	if exp == nil || strings.TrimSpace(exp.GetId()) == "" {
 		return nil, status.Error(codes.InvalidArgument, "expense.id is required")
 	}
 
-	// Build dynamic update set based on update_mask paths
 	paths := map[string]bool{}
 	if mask := req.Msg.GetUpdateMask(); mask != nil {
 		for _, p := range mask.Paths {
@@ -183,7 +212,7 @@ func (s *Store) UpdateExpense(ctx context.Context, req *connect.Request[expensev
 	}
 	if paths["amount"] && exp.Amount != nil {
 		set = append(set, fmt.Sprintf("amount_cents=$%d,currency_code=$%d", idx, idx+1))
-		args = append(args, exp.Amount.GetUnits()*100+int64(exp.Amount.GetNanos())/10_000_000, exp.Amount.GetCurrencyCode())
+		args = append(args, moneyToCents(exp.Amount), exp.Amount.GetCurrencyCode())
 		idx += 2
 	}
 	if len(set) == 0 {
@@ -193,24 +222,26 @@ func (s *Store) UpdateExpense(ctx context.Context, req *connect.Request[expensev
 
 	_, err := s.db.Exec(ctx, fmt.Sprintf("UPDATE expenses SET %s, updated_at=NOW() WHERE id=$%d", strings.Join(set, ","), idx), args...)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "update failed: %v", err)
+		slog.Error("update expense query failed", "error", err, "id", exp.GetId())
+		return nil, status.Error(codes.Internal, "failed to update expense")
 	}
-	// Return updated row
 	return s.GetExpense(ctx, connect.NewRequest(&expensev1.GetExpenseRequest{Id: exp.GetId()}))
 }
 
-func (s *Store) DeleteExpense(ctx context.Context, req *connect.Request[expensev1.DeleteExpenseRequest]) (*connect.Response[timestamppb.Timestamp], error) {
+// DeleteExpense removes an expense by id. Returns codes.NotFound when no row
+// matched. Returns an empty response on success (AIP-135).
+func (s *Store) DeleteExpense(ctx context.Context, req *connect.Request[expensev1.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error) {
 	id := strings.TrimSpace(req.Msg.GetId())
 	if id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 	res, err := s.db.Exec(ctx, `DELETE FROM expenses WHERE id=$1`, id)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "delete failed: %v", err)
+		slog.Error("delete expense query failed", "error", err, "id", id)
+		return nil, status.Error(codes.Internal, "failed to delete expense")
 	}
-	n := res.RowsAffected()
-	if n == 0 {
+	if res.RowsAffected() == 0 {
 		return nil, status.Error(codes.NotFound, "expense not found")
 	}
-	return connect.NewResponse(timestamppb.Now()), nil
+	return connect.NewResponse(&emptypb.Empty{}), nil
 }
