@@ -1,24 +1,13 @@
+version: "2"
 run:
-  timeout: 5m
   modules-download-mode: readonly
-
-issues:
-  exclude-dirs:
-    - internal/gen
-  exclude-rules:
-    - path: _test\.go$
-      linters:
-        - errcheck
-
 linters:
-  disable-all: true
+  default: none
   enable:
     - bodyclose
     - contextcheck
     - errcheck
     - errorlint
-    - gofmt
-    - gosimple
     - govet
     - ineffassign
     - misspell
@@ -27,16 +16,41 @@ linters:
     - sqlclosecheck
     - staticcheck
     - unused
-
-linters-settings:
-  revive:
+  settings:
+    revive:
+      rules:
+        - name: var-naming
+        - name: package-comments
+          disabled: true
+        - name: exported
+          disabled: true
+    staticcheck:
+      checks:
+        - all
+        - -ST1000
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
-      - name: var-naming
-      - name: package-comments
-        disabled: true
-      - name: exported
-        disabled: true
-  staticcheck:
-    checks:
-      - all
-      - -ST1000 # package comment
+      - linters:
+          - errcheck
+        path: _test\.go$
+    paths:
+      - internal/gen
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - internal/gen
+      - third_party$
+      - builtin$
+      - examples$

@@ -109,7 +109,7 @@ func (v *Verifier) Verify(tokenString string) (*jwt.RegisteredClaims, error) {
 	if claims.NotBefore != nil && now.Add(v.Leeway).Before(claims.NotBefore.Time) {
 		return nil, ErrInvalidToken
 	}
-	if claims.ExpiresAt != nil && now.After(claims.ExpiresAt.Time.Add(v.Leeway)) {
+	if claims.ExpiresAt != nil && now.After(claims.ExpiresAt.Add(v.Leeway)) {
 		return nil, ErrInvalidToken
 	}
 	// Issuer
