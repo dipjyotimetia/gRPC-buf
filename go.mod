@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	connectrpc.com/connect v1.20.0
-	connectrpc.com/grpchealth v1.4.0
+	connectrpc.com/grpchealth v1.5.0
 	connectrpc.com/grpcreflect v1.3.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
@@ -20,7 +20,7 @@ require (
 	golang.org/x/time v0.15.0
 	google.golang.org/genproto v0.0.0-20260420184626-e10c466a9529
 	google.golang.org/genproto/googleapis/api v0.0.0-20260420184626-e10c466a9529
-	google.golang.org/grpc v1.81.1
+	google.golang.org/grpc v1.82.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
 )
