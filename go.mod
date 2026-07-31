@@ -11,7 +11,7 @@ require (
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/modelcontextprotocol/go-sdk v1.6.1
+	github.com/modelcontextprotocol/go-sdk v1.7.0
 	github.com/redpanda-data/protoc-gen-go-mcp v0.0.0-20260323112146-887f275039cd
 	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.11.1
