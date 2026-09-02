@@ -20,7 +20,7 @@ require (
 	golang.org/x/time v0.15.0
 	google.golang.org/genproto v0.0.0-20260420184626-e10c466a9529
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa
-	google.golang.org/grpc v1.83.0
+	google.golang.org/grpc v1.83.1
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v3 v3.0.1
 )
