@@ -11,7 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
 	"github.com/grpc-buf/internal/gen/proto/payment/paymentv1connect"
 
@@ -36,26 +37,28 @@ func TestElizaServer(t *testing.T) {
 	defer db.Close()
 	paymentService := service.NewPaymentService(db)
 	mux := http.NewServeMux()
-	mux.Handle(paymentv1connect.NewPaymentServiceHandler(paymentService))
+	srv := connect.NewServer()
+	paymentv1connect.RegisterPaymentServiceHandler(srv, paymentService)
+	connecthttp.Mount(mux, srv)
 	server := httptest.NewUnstartedServer(mux)
 	server.EnableHTTP2 = true
 	server.StartTLS()
 	defer server.Close()
 
-	connectClient := paymentv1connect.NewPaymentServiceClient(
+	connectClient := paymentv1connect.NewPaymentServiceClient(connect.NewClient(connecthttp.NewTransport(
 		server.Client(),
 		server.URL,
-	)
-	grpcClient := paymentv1connect.NewPaymentServiceClient(
+	)))
+	grpcClient := paymentv1connect.NewPaymentServiceClient(connect.NewClient(connecthttp.NewTransport(
 		server.Client(),
 		server.URL,
-		connect.WithGRPC(),
-	)
+		connecthttp.WithGRPC(),
+	)))
 	clients := []paymentv1connect.PaymentServiceClient{connectClient, grpcClient}
 
 	t.Run("say", func(t *testing.T) {
 		for _, client := range clients {
-			result, err := client.MakePayment(context.Background(), connect.NewRequest(&paymentv1.PaymentRequest{
+			result, err := client.MakePayment(context.Background(), &paymentv1.PaymentRequest{
 				CardToken:    "tok_test_debit_1",
 				Card:         paymentv1.CardType_CARD_TYPE_DEBIT,
 				Name:         "TestCard",
@@ -65,9 +68,9 @@ func TestElizaServer(t *testing.T) {
 					Seconds: int64(time.Now().Second()),
 					Nanos:   int32(time.Now().Nanosecond()),
 				},
-			}))
+			})
 			require.Nil(t, err)
-			assert.True(t, len(result.Msg.String()) > 0)
+			assert.True(t, len(result.String()) > 0)
 		}
 	})
 }

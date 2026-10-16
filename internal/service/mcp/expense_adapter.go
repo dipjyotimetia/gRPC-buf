@@ -3,7 +3,6 @@ package mcp
 import (
 	"context"
 
-	"connectrpc.com/connect"
 	expensev1 "github.com/grpc-buf/internal/gen/proto/expense"
 	"github.com/grpc-buf/internal/service"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -21,50 +20,25 @@ func NewExpenseServiceAdapter(svc service.ExpenseService) *ExpenseServiceAdapter
 
 // CreateExpense adapts from MCP to Connect
 func (a *ExpenseServiceAdapter) CreateExpense(ctx context.Context, req *expensev1.CreateExpenseRequest) (*expensev1.Expense, error) {
-	connectReq := connect.NewRequest(req)
-	resp, err := a.svc.CreateExpense(ctx, connectReq)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Msg, nil
+	return a.svc.CreateExpense(ctx, req)
 }
 
 // GetExpense adapts from MCP to Connect
 func (a *ExpenseServiceAdapter) GetExpense(ctx context.Context, req *expensev1.GetExpenseRequest) (*expensev1.Expense, error) {
-	connectReq := connect.NewRequest(req)
-	resp, err := a.svc.GetExpense(ctx, connectReq)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Msg, nil
+	return a.svc.GetExpense(ctx, req)
 }
 
 // ListExpenses adapts from MCP to Connect
 func (a *ExpenseServiceAdapter) ListExpenses(ctx context.Context, req *expensev1.ListExpensesRequest) (*expensev1.ListExpensesResponse, error) {
-	connectReq := connect.NewRequest(req)
-	resp, err := a.svc.ListExpenses(ctx, connectReq)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Msg, nil
+	return a.svc.ListExpenses(ctx, req)
 }
 
 // UpdateExpense adapts from MCP to Connect
 func (a *ExpenseServiceAdapter) UpdateExpense(ctx context.Context, req *expensev1.UpdateExpenseRequest) (*expensev1.Expense, error) {
-	connectReq := connect.NewRequest(req)
-	resp, err := a.svc.UpdateExpense(ctx, connectReq)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Msg, nil
+	return a.svc.UpdateExpense(ctx, req)
 }
 
 // DeleteExpense adapts from MCP to Connect
 func (a *ExpenseServiceAdapter) DeleteExpense(ctx context.Context, req *expensev1.DeleteExpenseRequest) (*emptypb.Empty, error) {
-	connectReq := connect.NewRequest(req)
-	resp, err := a.svc.DeleteExpense(ctx, connectReq)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Msg, nil
+	return a.svc.DeleteExpense(ctx, req)
 }

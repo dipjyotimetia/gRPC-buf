@@ -5,226 +5,246 @@
 package expensev1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	expense "github.com/grpc-buf/internal/gen/proto/expense"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// ExpenseServiceName is the fully-qualified name of the ExpenseService service.
 	ExpenseServiceName = "rpc.expense.v1.ExpenseService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// ExpenseServiceCreateExpenseProcedure is the fully-qualified name of the ExpenseService's
-	// CreateExpense RPC.
-	ExpenseServiceCreateExpenseProcedure = "/rpc.expense.v1.ExpenseService/CreateExpense"
-	// ExpenseServiceGetExpenseProcedure is the fully-qualified name of the ExpenseService's GetExpense
+	// ExpenseServiceCreateExpenseProcedure is the procedure name of the ExpenseService's CreateExpense
 	// RPC.
+	ExpenseServiceCreateExpenseProcedure = "/rpc.expense.v1.ExpenseService/CreateExpense"
+	// ExpenseServiceGetExpenseProcedure is the procedure name of the ExpenseService's GetExpense RPC.
 	ExpenseServiceGetExpenseProcedure = "/rpc.expense.v1.ExpenseService/GetExpense"
-	// ExpenseServiceListExpensesProcedure is the fully-qualified name of the ExpenseService's
-	// ListExpenses RPC.
+	// ExpenseServiceListExpensesProcedure is the procedure name of the ExpenseService's ListExpenses
+	// RPC.
 	ExpenseServiceListExpensesProcedure = "/rpc.expense.v1.ExpenseService/ListExpenses"
-	// ExpenseServiceUpdateExpenseProcedure is the fully-qualified name of the ExpenseService's
-	// UpdateExpense RPC.
+	// ExpenseServiceUpdateExpenseProcedure is the procedure name of the ExpenseService's UpdateExpense
+	// RPC.
 	ExpenseServiceUpdateExpenseProcedure = "/rpc.expense.v1.ExpenseService/UpdateExpense"
-	// ExpenseServiceDeleteExpenseProcedure is the fully-qualified name of the ExpenseService's
-	// DeleteExpense RPC.
+	// ExpenseServiceDeleteExpenseProcedure is the procedure name of the ExpenseService's DeleteExpense
+	// RPC.
 	ExpenseServiceDeleteExpenseProcedure = "/rpc.expense.v1.ExpenseService/DeleteExpense"
+)
+
+var (
+	expenseServiceCreateExpenseSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     expense.File_expense_expense_proto.Services().ByName("ExpenseService").Methods().ByName("CreateExpense"),
+			Procedure:  ExpenseServiceCreateExpenseProcedure,
+		}
+	})
+	expenseServiceGetExpenseSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     expense.File_expense_expense_proto.Services().ByName("ExpenseService").Methods().ByName("GetExpense"),
+			Procedure:  ExpenseServiceGetExpenseProcedure,
+		}
+	})
+	expenseServiceListExpensesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     expense.File_expense_expense_proto.Services().ByName("ExpenseService").Methods().ByName("ListExpenses"),
+			Procedure:  ExpenseServiceListExpensesProcedure,
+		}
+	})
+	expenseServiceUpdateExpenseSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     expense.File_expense_expense_proto.Services().ByName("ExpenseService").Methods().ByName("UpdateExpense"),
+			Procedure:  ExpenseServiceUpdateExpenseProcedure,
+		}
+	})
+	expenseServiceDeleteExpenseSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     expense.File_expense_expense_proto.Services().ByName("ExpenseService").Methods().ByName("DeleteExpense"),
+			Procedure:  ExpenseServiceDeleteExpenseProcedure,
+		}
+	})
 )
 
 // ExpenseServiceClient is a client for the rpc.expense.v1.ExpenseService service.
 type ExpenseServiceClient interface {
-	CreateExpense(context.Context, *connect.Request[expense.CreateExpenseRequest]) (*connect.Response[expense.Expense], error)
-	GetExpense(context.Context, *connect.Request[expense.GetExpenseRequest]) (*connect.Response[expense.Expense], error)
-	ListExpenses(context.Context, *connect.Request[expense.ListExpensesRequest]) (*connect.Response[expense.ListExpensesResponse], error)
-	UpdateExpense(context.Context, *connect.Request[expense.UpdateExpenseRequest]) (*connect.Response[expense.Expense], error)
+	CreateExpense(context.Context, *expense.CreateExpenseRequest) (*expense.Expense, error)
+	GetExpense(context.Context, *expense.GetExpenseRequest) (*expense.Expense, error)
+	ListExpenses(context.Context, *expense.ListExpensesRequest) (*expense.ListExpensesResponse, error)
+	UpdateExpense(context.Context, *expense.UpdateExpenseRequest) (*expense.Expense, error)
 	// DeleteExpense removes the expense. Returns Empty on success (AIP-135);
 	// codes.NotFound if no row matched.
-	DeleteExpense(context.Context, *connect.Request[expense.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error)
+	DeleteExpense(context.Context, *expense.DeleteExpenseRequest) (*emptypb.Empty, error)
 }
 
-// NewExpenseServiceClient constructs a client for the rpc.expense.v1.ExpenseService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewExpenseServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) ExpenseServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	expenseServiceMethods := expense.File_expense_expense_proto.Services().ByName("ExpenseService").Methods()
-	return &expenseServiceClient{
-		createExpense: connect.NewClient[expense.CreateExpenseRequest, expense.Expense](
-			httpClient,
-			baseURL+ExpenseServiceCreateExpenseProcedure,
-			connect.WithSchema(expenseServiceMethods.ByName("CreateExpense")),
-			connect.WithClientOptions(opts...),
-		),
-		getExpense: connect.NewClient[expense.GetExpenseRequest, expense.Expense](
-			httpClient,
-			baseURL+ExpenseServiceGetExpenseProcedure,
-			connect.WithSchema(expenseServiceMethods.ByName("GetExpense")),
-			connect.WithClientOptions(opts...),
-		),
-		listExpenses: connect.NewClient[expense.ListExpensesRequest, expense.ListExpensesResponse](
-			httpClient,
-			baseURL+ExpenseServiceListExpensesProcedure,
-			connect.WithSchema(expenseServiceMethods.ByName("ListExpenses")),
-			connect.WithClientOptions(opts...),
-		),
-		updateExpense: connect.NewClient[expense.UpdateExpenseRequest, expense.Expense](
-			httpClient,
-			baseURL+ExpenseServiceUpdateExpenseProcedure,
-			connect.WithSchema(expenseServiceMethods.ByName("UpdateExpense")),
-			connect.WithClientOptions(opts...),
-		),
-		deleteExpense: connect.NewClient[expense.DeleteExpenseRequest, emptypb.Empty](
-			httpClient,
-			baseURL+ExpenseServiceDeleteExpenseProcedure,
-			connect.WithSchema(expenseServiceMethods.ByName("DeleteExpense")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// expenseServiceClient implements ExpenseServiceClient.
-type expenseServiceClient struct {
-	createExpense *connect.Client[expense.CreateExpenseRequest, expense.Expense]
-	getExpense    *connect.Client[expense.GetExpenseRequest, expense.Expense]
-	listExpenses  *connect.Client[expense.ListExpensesRequest, expense.ListExpensesResponse]
-	updateExpense *connect.Client[expense.UpdateExpenseRequest, expense.Expense]
-	deleteExpense *connect.Client[expense.DeleteExpenseRequest, emptypb.Empty]
-}
-
-// CreateExpense calls rpc.expense.v1.ExpenseService.CreateExpense.
-func (c *expenseServiceClient) CreateExpense(ctx context.Context, req *connect.Request[expense.CreateExpenseRequest]) (*connect.Response[expense.Expense], error) {
-	return c.createExpense.CallUnary(ctx, req)
-}
-
-// GetExpense calls rpc.expense.v1.ExpenseService.GetExpense.
-func (c *expenseServiceClient) GetExpense(ctx context.Context, req *connect.Request[expense.GetExpenseRequest]) (*connect.Response[expense.Expense], error) {
-	return c.getExpense.CallUnary(ctx, req)
-}
-
-// ListExpenses calls rpc.expense.v1.ExpenseService.ListExpenses.
-func (c *expenseServiceClient) ListExpenses(ctx context.Context, req *connect.Request[expense.ListExpensesRequest]) (*connect.Response[expense.ListExpensesResponse], error) {
-	return c.listExpenses.CallUnary(ctx, req)
-}
-
-// UpdateExpense calls rpc.expense.v1.ExpenseService.UpdateExpense.
-func (c *expenseServiceClient) UpdateExpense(ctx context.Context, req *connect.Request[expense.UpdateExpenseRequest]) (*connect.Response[expense.Expense], error) {
-	return c.updateExpense.CallUnary(ctx, req)
-}
-
-// DeleteExpense calls rpc.expense.v1.ExpenseService.DeleteExpense.
-func (c *expenseServiceClient) DeleteExpense(ctx context.Context, req *connect.Request[expense.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error) {
-	return c.deleteExpense.CallUnary(ctx, req)
+// NewExpenseServiceClient constructs a client for the rpc.expense.v1.ExpenseService service.
+// Multiple service clients may share a single connect.Client.
+func NewExpenseServiceClient(client *connect.Client) ExpenseServiceClient {
+	return &expenseServiceClient{client: client}
 }
 
 // ExpenseServiceHandler is an implementation of the rpc.expense.v1.ExpenseService service.
 type ExpenseServiceHandler interface {
-	CreateExpense(context.Context, *connect.Request[expense.CreateExpenseRequest]) (*connect.Response[expense.Expense], error)
-	GetExpense(context.Context, *connect.Request[expense.GetExpenseRequest]) (*connect.Response[expense.Expense], error)
-	ListExpenses(context.Context, *connect.Request[expense.ListExpensesRequest]) (*connect.Response[expense.ListExpensesResponse], error)
-	UpdateExpense(context.Context, *connect.Request[expense.UpdateExpenseRequest]) (*connect.Response[expense.Expense], error)
+	CreateExpense(context.Context, *expense.CreateExpenseRequest) (*expense.Expense, error)
+	GetExpense(context.Context, *expense.GetExpenseRequest) (*expense.Expense, error)
+	ListExpenses(context.Context, *expense.ListExpensesRequest) (*expense.ListExpensesResponse, error)
+	UpdateExpense(context.Context, *expense.UpdateExpenseRequest) (*expense.Expense, error)
 	// DeleteExpense removes the expense. Returns Empty on success (AIP-135);
 	// codes.NotFound if no row matched.
-	DeleteExpense(context.Context, *connect.Request[expense.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error)
+	DeleteExpense(context.Context, *expense.DeleteExpenseRequest) (*emptypb.Empty, error)
 }
 
-// NewExpenseServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewExpenseServiceHandler(svc ExpenseServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	expenseServiceMethods := expense.File_expense_expense_proto.Services().ByName("ExpenseService").Methods()
-	expenseServiceCreateExpenseHandler := connect.NewUnaryHandler(
-		ExpenseServiceCreateExpenseProcedure,
-		svc.CreateExpense,
-		connect.WithSchema(expenseServiceMethods.ByName("CreateExpense")),
-		connect.WithHandlerOptions(opts...),
+// RegisterExpenseServiceHandler registers svc as the rpc.expense.v1.ExpenseService implementation
+// on server.
+func RegisterExpenseServiceHandler(server *connect.Server, svc ExpenseServiceHandler) {
+	adapter := expenseServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: expenseServiceCreateExpenseSpec(), Handler: adapter.createExpense},
+		connect.Method{Spec: expenseServiceGetExpenseSpec(), Handler: adapter.getExpense},
+		connect.Method{Spec: expenseServiceListExpensesSpec(), Handler: adapter.listExpenses},
+		connect.Method{Spec: expenseServiceUpdateExpenseSpec(), Handler: adapter.updateExpense},
+		connect.Method{Spec: expenseServiceDeleteExpenseSpec(), Handler: adapter.deleteExpense},
 	)
-	expenseServiceGetExpenseHandler := connect.NewUnaryHandler(
-		ExpenseServiceGetExpenseProcedure,
-		svc.GetExpense,
-		connect.WithSchema(expenseServiceMethods.ByName("GetExpense")),
-		connect.WithHandlerOptions(opts...),
-	)
-	expenseServiceListExpensesHandler := connect.NewUnaryHandler(
-		ExpenseServiceListExpensesProcedure,
-		svc.ListExpenses,
-		connect.WithSchema(expenseServiceMethods.ByName("ListExpenses")),
-		connect.WithHandlerOptions(opts...),
-	)
-	expenseServiceUpdateExpenseHandler := connect.NewUnaryHandler(
-		ExpenseServiceUpdateExpenseProcedure,
-		svc.UpdateExpense,
-		connect.WithSchema(expenseServiceMethods.ByName("UpdateExpense")),
-		connect.WithHandlerOptions(opts...),
-	)
-	expenseServiceDeleteExpenseHandler := connect.NewUnaryHandler(
-		ExpenseServiceDeleteExpenseProcedure,
-		svc.DeleteExpense,
-		connect.WithSchema(expenseServiceMethods.ByName("DeleteExpense")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/rpc.expense.v1.ExpenseService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case ExpenseServiceCreateExpenseProcedure:
-			expenseServiceCreateExpenseHandler.ServeHTTP(w, r)
-		case ExpenseServiceGetExpenseProcedure:
-			expenseServiceGetExpenseHandler.ServeHTTP(w, r)
-		case ExpenseServiceListExpensesProcedure:
-			expenseServiceListExpensesHandler.ServeHTTP(w, r)
-		case ExpenseServiceUpdateExpenseProcedure:
-			expenseServiceUpdateExpenseHandler.ServeHTTP(w, r)
-		case ExpenseServiceDeleteExpenseProcedure:
-			expenseServiceDeleteExpenseHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedExpenseServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedExpenseServiceHandler struct{}
 
-func (UnimplementedExpenseServiceHandler) CreateExpense(context.Context, *connect.Request[expense.CreateExpenseRequest]) (*connect.Response[expense.Expense], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.expense.v1.ExpenseService.CreateExpense is not implemented"))
+func (UnimplementedExpenseServiceHandler) CreateExpense(context.Context, *expense.CreateExpenseRequest) (*expense.Expense, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "rpc.expense.v1.ExpenseService.CreateExpense is not implemented")
 }
 
-func (UnimplementedExpenseServiceHandler) GetExpense(context.Context, *connect.Request[expense.GetExpenseRequest]) (*connect.Response[expense.Expense], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.expense.v1.ExpenseService.GetExpense is not implemented"))
+func (UnimplementedExpenseServiceHandler) GetExpense(context.Context, *expense.GetExpenseRequest) (*expense.Expense, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "rpc.expense.v1.ExpenseService.GetExpense is not implemented")
 }
 
-func (UnimplementedExpenseServiceHandler) ListExpenses(context.Context, *connect.Request[expense.ListExpensesRequest]) (*connect.Response[expense.ListExpensesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.expense.v1.ExpenseService.ListExpenses is not implemented"))
+func (UnimplementedExpenseServiceHandler) ListExpenses(context.Context, *expense.ListExpensesRequest) (*expense.ListExpensesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "rpc.expense.v1.ExpenseService.ListExpenses is not implemented")
 }
 
-func (UnimplementedExpenseServiceHandler) UpdateExpense(context.Context, *connect.Request[expense.UpdateExpenseRequest]) (*connect.Response[expense.Expense], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.expense.v1.ExpenseService.UpdateExpense is not implemented"))
+func (UnimplementedExpenseServiceHandler) UpdateExpense(context.Context, *expense.UpdateExpenseRequest) (*expense.Expense, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "rpc.expense.v1.ExpenseService.UpdateExpense is not implemented")
 }
 
-func (UnimplementedExpenseServiceHandler) DeleteExpense(context.Context, *connect.Request[expense.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.expense.v1.ExpenseService.DeleteExpense is not implemented"))
+func (UnimplementedExpenseServiceHandler) DeleteExpense(context.Context, *expense.DeleteExpenseRequest) (*emptypb.Empty, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "rpc.expense.v1.ExpenseService.DeleteExpense is not implemented")
+}
+
+type expenseServiceClient struct {
+	client *connect.Client
+}
+
+func (c *expenseServiceClient) CreateExpense(ctx context.Context, req *expense.CreateExpenseRequest) (*expense.Expense, error) {
+	var res expense.Expense
+	if err := c.client.CallUnary(ctx, expenseServiceCreateExpenseSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *expenseServiceClient) GetExpense(ctx context.Context, req *expense.GetExpenseRequest) (*expense.Expense, error) {
+	var res expense.Expense
+	if err := c.client.CallUnary(ctx, expenseServiceGetExpenseSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *expenseServiceClient) ListExpenses(ctx context.Context, req *expense.ListExpensesRequest) (*expense.ListExpensesResponse, error) {
+	var res expense.ListExpensesResponse
+	if err := c.client.CallUnary(ctx, expenseServiceListExpensesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *expenseServiceClient) UpdateExpense(ctx context.Context, req *expense.UpdateExpenseRequest) (*expense.Expense, error) {
+	var res expense.Expense
+	if err := c.client.CallUnary(ctx, expenseServiceUpdateExpenseSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *expenseServiceClient) DeleteExpense(ctx context.Context, req *expense.DeleteExpenseRequest) (*emptypb.Empty, error) {
+	var res emptypb.Empty
+	if err := c.client.CallUnary(ctx, expenseServiceDeleteExpenseSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type expenseServiceHandler struct{ svc ExpenseServiceHandler }
+
+func (h expenseServiceHandler) createExpense(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req expense.CreateExpenseRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.CreateExpense(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h expenseServiceHandler) getExpense(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req expense.GetExpenseRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetExpense(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h expenseServiceHandler) listExpenses(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req expense.ListExpensesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListExpenses(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h expenseServiceHandler) updateExpense(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req expense.UpdateExpenseRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.UpdateExpense(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h expenseServiceHandler) deleteExpense(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req expense.DeleteExpenseRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.DeleteExpense(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }

@@ -12,25 +12,20 @@ Examples (Go):
 
 ```go
 // Connect protocol (default)
-client := paymentv1connect.NewPaymentClient(
-    http.DefaultClient,
-    "http://localhost:8080",
-)
-res, err := client.MakePayment(ctx, connect.NewRequest(&paymentv1.PaymentRequest{/*...*/}))
+client := paymentv1connect.NewPaymentServiceClient(connect.NewClient(
+    connecthttp.NewTransport(http.DefaultClient, "http://localhost:8080"),
+))
+res, err := client.MakePayment(ctx, &paymentv1.PaymentRequest{/*...*/})
 
 // gRPC
-grpcClient := paymentv1connect.NewPaymentClient(
-    http.DefaultClient,
-    "http://localhost:8080",
-    connect.WithGRPC(),
-)
+grpcClient := paymentv1connect.NewPaymentServiceClient(connect.NewClient(
+    connecthttp.NewTransport(http.DefaultClient, "http://localhost:8080", connecthttp.WithGRPC()),
+))
 
 // gRPC-Web
-webClient := userv1connect.NewUserServiceClient(
-    http.DefaultClient,
-    "http://localhost:8080",
-    connect.WithGRPCWeb(),
-)
+webClient := userv1connect.NewUserServiceClient(connect.NewClient(
+    connecthttp.NewTransport(http.DefaultClient, "http://localhost:8080", connecthttp.WithGRPCWeb()),
+))
 ```
 
 Authenticated call with Bearer token (Connect)
@@ -39,15 +34,14 @@ Authenticated call with Bearer token (Connect)
 // After logging in and receiving an access token:
 token := "<access_token>"
 
-expClient := expensev1connect.NewExpenseServiceClient(
-    http.DefaultClient,
-    "http://localhost:8080",
-)
-req := connect.NewRequest(&expensev1.ListExpensesRequest{UserId: "<user-id>"})
-req.Header().Set("Authorization", "Bearer "+token)
-resp, err := expClient.ListExpenses(ctx, req)
+expClient := expensev1connect.NewExpenseServiceClient(connect.NewClient(
+    connecthttp.NewTransport(http.DefaultClient, "http://localhost:8080"),
+))
+ctx, info := connect.NewClientContext(ctx)
+info.RequestHeader().Set("Authorization", "Bearer "+token)
+resp, err := expClient.ListExpenses(ctx, &expensev1.ListExpensesRequest{UserId: "<user-id>"})
 if err != nil { /* handle */ }
-fmt.Println("count:", len(resp.Msg.GetExpenses()))
+fmt.Println("count:", len(resp.GetExpenses()))
 ```
 
 ## User API

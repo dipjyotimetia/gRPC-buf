@@ -8,7 +8,6 @@ import (
 	"os"
 	"testing"
 
-	"connectrpc.com/connect"
 	"github.com/grpc-buf/internal/config"
 	expensev1 "github.com/grpc-buf/internal/gen/proto/expense"
 	userv1 "github.com/grpc-buf/internal/gen/proto/registration"
@@ -71,13 +70,13 @@ func TestMCPServer_DatabaseConnectivity(t *testing.T) {
 	require.NoError(t, err, "Failed to ping database")
 
 	// Test that we can list expenses (empty list is fine)
-	listReq := connect.NewRequest(&expensev1.ListExpensesRequest{
+	listReq := &expensev1.ListExpensesRequest{
 		PageSize: 10,
-	})
+	}
 	listResp, err := dataStore.ListExpenses(ctx, listReq)
 	require.NoError(t, err, "Failed to list expenses")
 	require.NotNil(t, listResp, "List expenses response should not be nil")
-	assert.GreaterOrEqual(t, len(listResp.Msg.Expenses), 0, "Expense list should be non-negative")
+	assert.GreaterOrEqual(t, len(listResp.Expenses), 0, "Expense list should be non-negative")
 }
 
 func TestMCPServer_ServiceAdapters(t *testing.T) {
@@ -130,7 +129,7 @@ func TestMCPServer_CreateExpense(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a test expense
-	createReq := connect.NewRequest(&expensev1.CreateExpenseRequest{
+	createReq := &expensev1.CreateExpenseRequest{
 		Expense: &expensev1.Expense{
 			UserId: "00000000-0000-0000-0000-000000000001",
 			Amount: &money.Money{
@@ -141,29 +140,29 @@ func TestMCPServer_CreateExpense(t *testing.T) {
 			Category:    "MCP Test",
 			Description: "Integration test expense",
 		},
-	})
+	}
 
 	createResp, err := dataStore.CreateExpense(ctx, createReq)
 	require.NoError(t, err, "Failed to create expense")
 	require.NotNil(t, createResp, "Create expense response should not be nil")
-	require.NotEmpty(t, createResp.Msg.Id, "Created expense should have an ID")
+	require.NotEmpty(t, createResp.Id, "Created expense should have an ID")
 
-	expenseID := createResp.Msg.Id
+	expenseID := createResp.Id
 
 	// Get the expense back
-	getReq := connect.NewRequest(&expensev1.GetExpenseRequest{
+	getReq := &expensev1.GetExpenseRequest{
 		Id: expenseID,
-	})
+	}
 	getResp, err := dataStore.GetExpense(ctx, getReq)
 	require.NoError(t, err, "Failed to get expense")
 	require.NotNil(t, getResp, "Get expense response should not be nil")
-	assert.Equal(t, expenseID, getResp.Msg.Id, "Expense ID should match")
-	assert.Equal(t, "MCP Test", getResp.Msg.Category, "Category should match")
+	assert.Equal(t, expenseID, getResp.Id, "Expense ID should match")
+	assert.Equal(t, "MCP Test", getResp.Category, "Category should match")
 
 	// Clean up - delete the expense
-	deleteReq := connect.NewRequest(&expensev1.DeleteExpenseRequest{
+	deleteReq := &expensev1.DeleteExpenseRequest{
 		Id: expenseID,
-	})
+	}
 	_, err = dataStore.DeleteExpense(ctx, deleteReq)
 	require.NoError(t, err, "Failed to delete expense")
 }
@@ -185,19 +184,19 @@ func TestMCPServer_UserRegistration(t *testing.T) {
 	ctx := context.Background()
 
 	// Register a test user
-	registerReq := connect.NewRequest(&userv1.RegisterRequest{
+	registerReq := &userv1.RegisterRequest{
 		Email:     "mcptest@example.com",
 		Password:  "TestPassword123!",
 		FirstName: "MCP",
 		LastName:  "Test User",
-	})
+	}
 
 	registerResp, err := dataStore.RegisterUser(ctx, registerReq)
 
 	// User might already exist from previous test runs - that's OK
 	if err == nil {
 		require.NotNil(t, registerResp, "Register response should not be nil")
-		assert.NotEmpty(t, registerResp.Msg.Id, "Should receive a user ID")
-		assert.NotNil(t, registerResp.Msg.CreateTime, "Should have creation timestamp")
+		assert.NotEmpty(t, registerResp.Id, "Should receive a user ID")
+		assert.NotNil(t, registerResp.CreateTime, "Should have creation timestamp")
 	}
 }

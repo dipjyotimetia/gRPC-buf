@@ -9,7 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
 	"github.com/grpc-buf/internal/gen/proto/payment/paymentv1connect"
 	"github.com/stretchr/testify/require"
@@ -18,12 +19,12 @@ import (
 )
 
 func TestPayment(t *testing.T) {
-	client := paymentv1connect.NewPaymentServiceClient(
+	client := paymentv1connect.NewPaymentServiceClient(connect.NewClient(connecthttp.NewTransport(
 		http.DefaultClient,
 		"http://localhost:8080",
-		connect.WithGRPC(),
-	)
-	req := connect.NewRequest(&paymentv1.PaymentRequest{
+		connecthttp.WithGRPC(),
+	)))
+	req := &paymentv1.PaymentRequest{
 		CardToken:    "tok_integration_debit_1",
 		Card:         paymentv1.CardType_CARD_TYPE_DEBIT,
 		Name:         "TestCard",
@@ -33,8 +34,8 @@ func TestPayment(t *testing.T) {
 			Seconds: int64(time.Now().Second()),
 			Nanos:   int32(time.Now().Nanosecond()),
 		},
-	})
+	}
 	res, err := client.MakePayment(context.Background(), req)
 	require.NoError(t, err, "MakePayment failed")
-	t.Logf("payment response: %+v", res.Msg)
+	t.Logf("payment response: %+v", res)
 }

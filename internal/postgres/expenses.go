@@ -8,12 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	expensev1 "github.com/grpc-buf/internal/gen/proto/expense"
 	"github.com/jackc/pgx/v5"
 	"google.golang.org/genproto/googleapis/type/money"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -39,16 +37,16 @@ func centsToMoney(cents int64, currency string) *money.Money {
 
 // CreateExpense inserts a new expense row and returns it with its generated id
 // and timestamps.
-func (s *Store) CreateExpense(ctx context.Context, req *connect.Request[expensev1.CreateExpenseRequest]) (*connect.Response[expensev1.Expense], error) {
-	exp := req.Msg.GetExpense()
+func (s *Store) CreateExpense(ctx context.Context, req *expensev1.CreateExpenseRequest) (*expensev1.Expense, error) {
+	exp := req.GetExpense()
 	if exp == nil {
-		return nil, status.Error(codes.InvalidArgument, "expense is required")
+		return nil, connect.NewError(connect.CodeInvalidArgument, "expense is required")
 	}
 	if strings.TrimSpace(exp.GetUserId()) == "" {
-		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+		return nil, connect.NewError(connect.CodeInvalidArgument, "user_id is required")
 	}
 	if exp.Amount == nil || exp.Amount.CurrencyCode == "" {
-		return nil, status.Error(codes.InvalidArgument, "amount currency_code is required")
+		return nil, connect.NewError(connect.CodeInvalidArgument, "amount currency_code is required")
 	}
 
 	var (
@@ -63,10 +61,10 @@ func (s *Store) CreateExpense(ctx context.Context, req *connect.Request[expensev
 	).Scan(&id, &createTime, &updateTime)
 	if err != nil {
 		slog.Error("create expense query failed", "error", err, "user_id", exp.GetUserId())
-		return nil, status.Error(codes.Internal, "failed to create expense")
+		return nil, connect.NewError(connect.CodeInternal, "failed to create expense")
 	}
 
-	return connect.NewResponse(&expensev1.Expense{
+	return &expensev1.Expense{
 		Id:          id,
 		UserId:      exp.GetUserId(),
 		Amount:      exp.GetAmount(),
@@ -74,15 +72,15 @@ func (s *Store) CreateExpense(ctx context.Context, req *connect.Request[expensev
 		Description: exp.GetDescription(),
 		CreateTime:  timestamppb.New(createTime),
 		UpdateTime:  timestamppb.New(updateTime),
-	}), nil
+	}, nil
 }
 
 // GetExpense fetches a single expense by id. Returns codes.NotFound when the
 // row does not exist.
-func (s *Store) GetExpense(ctx context.Context, req *connect.Request[expensev1.GetExpenseRequest]) (*connect.Response[expensev1.Expense], error) {
-	id := strings.TrimSpace(req.Msg.GetId())
+func (s *Store) GetExpense(ctx context.Context, req *expensev1.GetExpenseRequest) (*expensev1.Expense, error) {
+	id := strings.TrimSpace(req.GetId())
 	if id == "" {
-		return nil, status.Error(codes.InvalidArgument, "id is required")
+		return nil, connect.NewError(connect.CodeInvalidArgument, "id is required")
 	}
 
 	var (
@@ -96,13 +94,13 @@ func (s *Store) GetExpense(ctx context.Context, req *connect.Request[expensev1.G
 	).Scan(&userID, &amountCents, &currency, &category, &description, &createdAt, &updatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "expense not found")
+			return nil, connect.NewError(connect.CodeNotFound, "expense not found")
 		}
 		slog.Error("get expense query failed", "error", err, "id", id)
-		return nil, status.Error(codes.Internal, "failed to get expense")
+		return nil, connect.NewError(connect.CodeInternal, "failed to get expense")
 	}
 
-	return connect.NewResponse(&expensev1.Expense{
+	return &expensev1.Expense{
 		Id:          id,
 		UserId:      userID,
 		Amount:      centsToMoney(amountCents, currency),
@@ -110,22 +108,22 @@ func (s *Store) GetExpense(ctx context.Context, req *connect.Request[expensev1.G
 		Description: description,
 		CreateTime:  timestamppb.New(createdAt),
 		UpdateTime:  timestamppb.New(updatedAt),
-	}), nil
+	}, nil
 }
 
 // ListExpenses returns a page of expenses ordered by creation time (newest
 // first), optionally filtered by user_id. Pagination uses opaque "o:<offset>"
 // tokens.
-func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1.ListExpensesRequest]) (*connect.Response[expensev1.ListExpensesResponse], error) {
-	userID := strings.TrimSpace(req.Msg.GetUserId())
-	pageSize := req.Msg.GetPageSize()
+func (s *Store) ListExpenses(ctx context.Context, req *expensev1.ListExpensesRequest) (*expensev1.ListExpensesResponse, error) {
+	userID := strings.TrimSpace(req.GetUserId())
+	pageSize := req.GetPageSize()
 	if pageSize <= 0 || pageSize > 1000 {
 		pageSize = 50
 	}
 
 	offset := 0
-	if req.Msg.GetPageToken() != "" {
-		if n, err := fmt.Sscanf(req.Msg.GetPageToken(), "o:%d", &offset); n != 1 || err != nil {
+	if req.GetPageToken() != "" {
+		if n, err := fmt.Sscanf(req.GetPageToken(), "o:%d", &offset); n != 1 || err != nil {
 			offset = 0
 		}
 	}
@@ -147,7 +145,7 @@ func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1
 	}
 	if err != nil {
 		slog.Error("list expenses query failed", "error", err, "user_id", userID)
-		return nil, status.Error(codes.Internal, "failed to list expenses")
+		return nil, connect.NewError(connect.CodeInternal, "failed to list expenses")
 	}
 	defer rows.Close()
 
@@ -160,7 +158,7 @@ func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1
 		)
 		if err := rows.Scan(&id, &uid, &amountCents, &currency, &category, &description, &createdAt, &updatedAt); err != nil {
 			slog.Error("list expenses scan failed", "error", err)
-			return nil, status.Error(codes.Internal, "failed to list expenses")
+			return nil, connect.NewError(connect.CodeInternal, "failed to list expenses")
 		}
 		resp.Expenses = append(resp.Expenses, &expensev1.Expense{
 			Id:          id,
@@ -174,24 +172,24 @@ func (s *Store) ListExpenses(ctx context.Context, req *connect.Request[expensev1
 	}
 	if err := rows.Err(); err != nil {
 		slog.Error("list expenses iteration failed", "error", err)
-		return nil, status.Error(codes.Internal, "failed to list expenses")
+		return nil, connect.NewError(connect.CodeInternal, "failed to list expenses")
 	}
 	if len(resp.Expenses) == int(pageSize) {
 		resp.NextPageToken = fmt.Sprintf("o:%d", offset+int(pageSize))
 	}
-	return connect.NewResponse(resp), nil
+	return resp, nil
 }
 
 // UpdateExpense applies a field-mask update to an expense row. Supported
 // mask paths: category, description, amount.
-func (s *Store) UpdateExpense(ctx context.Context, req *connect.Request[expensev1.UpdateExpenseRequest]) (*connect.Response[expensev1.Expense], error) {
-	exp := req.Msg.GetExpense()
+func (s *Store) UpdateExpense(ctx context.Context, req *expensev1.UpdateExpenseRequest) (*expensev1.Expense, error) {
+	exp := req.GetExpense()
 	if exp == nil || strings.TrimSpace(exp.GetId()) == "" {
-		return nil, status.Error(codes.InvalidArgument, "expense.id is required")
+		return nil, connect.NewError(connect.CodeInvalidArgument, "expense.id is required")
 	}
 
 	paths := map[string]bool{}
-	if mask := req.Msg.GetUpdateMask(); mask != nil {
+	if mask := req.GetUpdateMask(); mask != nil {
 		for _, p := range mask.Paths {
 			paths[p] = true
 		}
@@ -216,32 +214,32 @@ func (s *Store) UpdateExpense(ctx context.Context, req *connect.Request[expensev
 		idx += 2
 	}
 	if len(set) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "update_mask has no supported fields")
+		return nil, connect.NewError(connect.CodeInvalidArgument, "update_mask has no supported fields")
 	}
 	args = append(args, exp.GetId())
 
 	_, err := s.db.Exec(ctx, fmt.Sprintf("UPDATE expenses SET %s, updated_at=NOW() WHERE id=$%d", strings.Join(set, ","), idx), args...)
 	if err != nil {
 		slog.Error("update expense query failed", "error", err, "id", exp.GetId())
-		return nil, status.Error(codes.Internal, "failed to update expense")
+		return nil, connect.NewError(connect.CodeInternal, "failed to update expense")
 	}
-	return s.GetExpense(ctx, connect.NewRequest(&expensev1.GetExpenseRequest{Id: exp.GetId()}))
+	return s.GetExpense(ctx, &expensev1.GetExpenseRequest{Id: exp.GetId()})
 }
 
 // DeleteExpense removes an expense by id. Returns codes.NotFound when no row
 // matched. Returns an empty response on success (AIP-135).
-func (s *Store) DeleteExpense(ctx context.Context, req *connect.Request[expensev1.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error) {
-	id := strings.TrimSpace(req.Msg.GetId())
+func (s *Store) DeleteExpense(ctx context.Context, req *expensev1.DeleteExpenseRequest) (*emptypb.Empty, error) {
+	id := strings.TrimSpace(req.GetId())
 	if id == "" {
-		return nil, status.Error(codes.InvalidArgument, "id is required")
+		return nil, connect.NewError(connect.CodeInvalidArgument, "id is required")
 	}
 	res, err := s.db.Exec(ctx, `DELETE FROM expenses WHERE id=$1`, id)
 	if err != nil {
 		slog.Error("delete expense query failed", "error", err, "id", id)
-		return nil, status.Error(codes.Internal, "failed to delete expense")
+		return nil, connect.NewError(connect.CodeInternal, "failed to delete expense")
 	}
 	if res.RowsAffected() == 0 {
-		return nil, status.Error(codes.NotFound, "expense not found")
+		return nil, connect.NewError(connect.CodeNotFound, "expense not found")
 	}
-	return connect.NewResponse(&emptypb.Empty{}), nil
+	return &emptypb.Empty{}, nil
 }

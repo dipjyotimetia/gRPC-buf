@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/grpc-buf/internal/config"
 	expensev1 "github.com/grpc-buf/internal/gen/proto/expense"
 	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
@@ -25,15 +24,15 @@ import (
 // DataStore is the persistence-facing contract used by both the Connect
 // services and the MCP transport.
 type DataStore interface {
-	MakePayment(ctx context.Context, req *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error)
-	LoginUser(ctx context.Context, req *connect.Request[userv1.LoginRequest]) (*connect.Response[userv1.LoginResponse], error)
-	RegisterUser(ctx context.Context, req *connect.Request[userv1.RegisterRequest]) (*connect.Response[userv1.RegisterResponse], error)
+	MakePayment(ctx context.Context, req *paymentv1.PaymentRequest) (*paymentv1.PaymentResponse, error)
+	LoginUser(ctx context.Context, req *userv1.LoginRequest) (*userv1.LoginResponse, error)
+	RegisterUser(ctx context.Context, req *userv1.RegisterRequest) (*userv1.RegisterResponse, error)
 	// Expense APIs
-	CreateExpense(ctx context.Context, req *connect.Request[expensev1.CreateExpenseRequest]) (*connect.Response[expensev1.Expense], error)
-	GetExpense(ctx context.Context, req *connect.Request[expensev1.GetExpenseRequest]) (*connect.Response[expensev1.Expense], error)
-	ListExpenses(ctx context.Context, req *connect.Request[expensev1.ListExpensesRequest]) (*connect.Response[expensev1.ListExpensesResponse], error)
-	UpdateExpense(ctx context.Context, req *connect.Request[expensev1.UpdateExpenseRequest]) (*connect.Response[expensev1.Expense], error)
-	DeleteExpense(ctx context.Context, req *connect.Request[expensev1.DeleteExpenseRequest]) (*connect.Response[emptypb.Empty], error)
+	CreateExpense(ctx context.Context, req *expensev1.CreateExpenseRequest) (*expensev1.Expense, error)
+	GetExpense(ctx context.Context, req *expensev1.GetExpenseRequest) (*expensev1.Expense, error)
+	ListExpenses(ctx context.Context, req *expensev1.ListExpensesRequest) (*expensev1.ListExpensesResponse, error)
+	UpdateExpense(ctx context.Context, req *expensev1.UpdateExpenseRequest) (*expensev1.Expense, error)
+	DeleteExpense(ctx context.Context, req *expensev1.DeleteExpenseRequest) (*emptypb.Empty, error)
 	// Health
 	Ping(ctx context.Context) error
 	Close()

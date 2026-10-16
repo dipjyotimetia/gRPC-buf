@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"golang.org/x/time/rate"
 )
 
@@ -28,32 +28,25 @@ type ipLimiter struct {
 
 // NewLoginInterceptor creates a server-side Connect interceptor that rate-limits
 // LoginUser calls per-client IP.
-func NewLoginInterceptor(rps float64, burst int) connect.Interceptor {
+func NewLoginInterceptor(rps float64, burst int) connect.ServerInterceptor {
 	l := &ipLimiter{m: make(map[string]*limiterEntry), r: rate.Limit(rps), b: burst}
-	return &loginLimiter{l: l}
+	ll := &loginLimiter{l: l}
+	return ll.wrap
 }
 
 type loginLimiter struct{ l *ipLimiter }
 
-func (ll *loginLimiter) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
-	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-		proc := req.Spec().Procedure
-		if !strings.HasSuffix(proc, "/LoginUser") {
-			return next(ctx, req)
+func (ll *loginLimiter) wrap(next connect.ServerFunc) connect.ServerFunc {
+	return func(ctx context.Context, spec connect.Spec, stream connect.ServerStream) error {
+		if !strings.HasSuffix(spec.Procedure, "/LoginUser") {
+			return next(ctx, spec, stream)
 		}
-		ip := clientIP(req)
-		if !ll.l.allow(ip) {
-			return nil, connect.NewError(connect.CodeResourceExhausted, ErrRateLimited)
+		info, _ := connect.CallInfoForServerContext(ctx)
+		if !ll.l.allow(clientIP(info)) {
+			return connect.NewError(connect.CodeResourceExhausted, ErrRateLimited.Error()).WithCause(ErrRateLimited)
 		}
-		return next(ctx, req)
+		return next(ctx, spec, stream)
 	}
-}
-
-func (ll *loginLimiter) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
-	return next
-}
-func (ll *loginLimiter) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
-	return next
 }
 
 func (l *ipLimiter) allow(ip string) bool {
@@ -67,19 +60,19 @@ func (l *ipLimiter) allow(ip string) bool {
 	return ent.lim.AllowN(time.Now(), 1)
 }
 
-func clientIP(req connect.AnyRequest) string {
+func clientIP(info *connect.CallInfo) string {
 	// Prefer X-Forwarded-For when present
-	if xff := req.Header().Get("X-Forwarded-For"); xff != "" {
+	if xff := info.RequestHeader().Get("X-Forwarded-For"); xff != "" {
 		parts := strings.Split(xff, ",")
 		if len(parts) > 0 {
 			return strings.TrimSpace(parts[0])
 		}
 	}
-	if xr := req.Header().Get("X-Real-IP"); xr != "" {
+	if xr := info.RequestHeader().Get("X-Real-IP"); xr != "" {
 		return strings.TrimSpace(xr)
 	}
-	if p := req.Peer(); p.Addr != "" {
-		return peerHost(p.Addr)
+	if info.PeerAddr != "" {
+		return peerHost(info.PeerAddr)
 	}
 	return "unknown"
 }
