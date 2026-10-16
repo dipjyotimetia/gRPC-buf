@@ -108,7 +108,7 @@ protoc-gen-go-grpc:
 
 .PHONY: protoc-gen-connect-go
 protoc-gen-connect-go:
-	go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
+	go install connectrpc.com/connect/v2/cmd/protoc-gen-connect-go@latest
 
 .PHONY: generate
 generate: ## Generate code from protobufs

@@ -9,7 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
 	"github.com/grpc-buf/internal/gen/proto/payment/paymentv1connect"
 	"google.golang.org/genproto/googleapis/type/money"
@@ -18,11 +19,11 @@ import (
 
 // This test uses the default Connect protocol (no WithGRPC/WithGRPCWeb option).
 func TestConnectProtocol_MakePayment(t *testing.T) {
-	client := paymentv1connect.NewPaymentServiceClient(
+	client := paymentv1connect.NewPaymentServiceClient(connect.NewClient(connecthttp.NewTransport(
 		http.DefaultClient,
 		"http://localhost:8080",
-	)
-	req := connect.NewRequest(&paymentv1.PaymentRequest{
+	)))
+	req := &paymentv1.PaymentRequest{
 		CardToken:    "tok_connect_credit_1",
 		Card:         paymentv1.CardType_CARD_TYPE_CREDIT,
 		Name:         "Connect Test",
@@ -32,7 +33,7 @@ func TestConnectProtocol_MakePayment(t *testing.T) {
 			Seconds: time.Now().Unix(),
 			Nanos:   int32(time.Now().Nanosecond()),
 		},
-	})
+	}
 	if _, err := client.MakePayment(context.Background(), req); err != nil {
 		t.Fatalf("connect protocol call failed: %v", err)
 	}

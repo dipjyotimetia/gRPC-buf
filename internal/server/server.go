@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/grpc-buf/internal/config"
 	"github.com/grpc-buf/internal/postgres"
 	"github.com/grpc-buf/internal/security"
@@ -115,7 +115,7 @@ func Run(cfg *config.Config) error {
 	return shutdownErr
 }
 
-func buildInterceptors(cfg *config.Config) []connect.Interceptor {
+func buildInterceptors(cfg *config.Config) []connect.ServerInterceptor {
 	loginRPS := 5
 	loginBurst := 10
 	if cfg.Server.LoginRPS > 0 {
@@ -124,7 +124,7 @@ func buildInterceptors(cfg *config.Config) []connect.Interceptor {
 	if cfg.Server.LoginBurst > 0 {
 		loginBurst = cfg.Server.LoginBurst
 	}
-	interceptors := []connect.Interceptor{
+	interceptors := []connect.ServerInterceptor{
 		ratelimit.NewLoginInterceptor(float64(loginRPS), loginBurst),
 	}
 

@@ -53,7 +53,7 @@ jobs:
       - name: Install protoc generators
         run: |
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-          go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
+          go install connectrpc.com/connect/v2/cmd/protoc-gen-connect-go@latest
 
       - name: Generate Protobufs
         run: buf generate

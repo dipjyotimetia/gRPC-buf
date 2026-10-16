@@ -3,7 +3,6 @@ package mocks
 import (
 	"context"
 
-	"connectrpc.com/connect"
 	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
 	userv1 "github.com/grpc-buf/internal/gen/proto/registration"
 	"github.com/stretchr/testify/mock"
@@ -13,19 +12,19 @@ type MockDataStore struct {
 	mock.Mock
 }
 
-func (m *MockDataStore) LoginUser(ctx context.Context, req *connect.Request[userv1.LoginRequest]) (*connect.Response[userv1.LoginResponse], error) {
+func (m *MockDataStore) LoginUser(ctx context.Context, req *userv1.LoginRequest) (*userv1.LoginResponse, error) {
 	args := m.Called(ctx, req)
-	return args.Get(0).(*connect.Response[userv1.LoginResponse]), args.Error(1)
+	return args.Get(0).(*userv1.LoginResponse), args.Error(1)
 }
 
-func (m *MockDataStore) RegisterUser(ctx context.Context, req *connect.Request[userv1.RegisterRequest]) (*connect.Response[userv1.RegisterResponse], error) {
+func (m *MockDataStore) RegisterUser(ctx context.Context, req *userv1.RegisterRequest) (*userv1.RegisterResponse, error) {
 	args := m.Called(ctx, req)
-	return args.Get(0).(*connect.Response[userv1.RegisterResponse]), args.Error(1)
+	return args.Get(0).(*userv1.RegisterResponse), args.Error(1)
 }
 
-func (m *MockDataStore) MakePayment(ctx context.Context, req *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error) {
+func (m *MockDataStore) MakePayment(ctx context.Context, req *paymentv1.PaymentRequest) (*paymentv1.PaymentResponse, error) {
 	args := m.Called(ctx, req)
-	return args.Get(0).(*connect.Response[paymentv1.PaymentResponse]), args.Error(1)
+	return args.Get(0).(*paymentv1.PaymentResponse), args.Error(1)
 }
 
 func (m *MockDataStore) Close() {

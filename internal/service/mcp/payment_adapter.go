@@ -3,7 +3,6 @@ package mcp
 import (
 	"context"
 
-	"connectrpc.com/connect"
 	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
 	"github.com/grpc-buf/internal/service"
 )
@@ -20,30 +19,15 @@ func NewPaymentServiceAdapter(svc service.PaymentService) *PaymentServiceAdapter
 
 // MakePayment adapts from MCP to Connect
 func (a *PaymentServiceAdapter) MakePayment(ctx context.Context, req *paymentv1.PaymentRequest) (*paymentv1.PaymentResponse, error) {
-	connectReq := connect.NewRequest(req)
-	resp, err := a.svc.MakePayment(ctx, connectReq)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Msg, nil
+	return a.svc.MakePayment(ctx, req)
 }
 
 // MarkInvoicePaid adapts from MCP to Connect
 func (a *PaymentServiceAdapter) MarkInvoicePaid(ctx context.Context, req *paymentv1.MarkInvoicePaidRequest) (*paymentv1.Invoice, error) {
-	connectReq := connect.NewRequest(req)
-	resp, err := a.svc.MarkInvoicePaid(ctx, connectReq)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Msg, nil
+	return a.svc.MarkInvoicePaid(ctx, req)
 }
 
 // PayInvoice adapts from MCP to Connect
 func (a *PaymentServiceAdapter) PayInvoice(ctx context.Context, req *paymentv1.PayInvoiceRequest) (*paymentv1.Invoice, error) {
-	connectReq := connect.NewRequest(req)
-	resp, err := a.svc.PayInvoice(ctx, connectReq)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Msg, nil
+	return a.svc.PayInvoice(ctx, req)
 }

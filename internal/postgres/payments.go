@@ -5,24 +5,22 @@ import (
 	"log/slog"
 	"strings"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	paymentv1 "github.com/grpc-buf/internal/gen/proto/payment"
 	"google.golang.org/genproto/googleapis/type/money"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // MakePayment validates the payment request and records it as a debit-card
 // payment. Low-level database errors are logged server-side and surfaced to
 // the client as a generic Internal status to avoid leaking driver detail.
-func (s *Store) MakePayment(ctx context.Context, req *connect.Request[paymentv1.PaymentRequest]) (*connect.Response[paymentv1.PaymentResponse], error) {
-	name := req.Msg.GetName()
-	amount := req.Msg.GetAmount()
-	cardToken := strings.TrimSpace(req.Msg.GetCardToken())
-	address := req.Msg.GetAddressLines()
+func (s *Store) MakePayment(ctx context.Context, req *paymentv1.PaymentRequest) (*paymentv1.PaymentResponse, error) {
+	name := req.GetName()
+	amount := req.GetAmount()
+	cardToken := strings.TrimSpace(req.GetCardToken())
+	address := req.GetAddressLines()
 
 	if !VerifyCardToken(cardToken) || !positiveMoney(amount) || len(address) == 0 {
-		return nil, status.Error(codes.FailedPrecondition, "field validation failed")
+		return nil, connect.NewError(connect.CodeFailedPrecondition, "field validation failed")
 	}
 
 	amountCents := amount.GetUnits()*100 + int64(amount.GetNanos())/nanosPerCent
@@ -33,16 +31,23 @@ func (s *Store) MakePayment(ctx context.Context, req *connect.Request[paymentv1.
 		cardToken, int(paymentv1.CardType_CARD_TYPE_DEBIT), name, address[0], amountCents, currency)
 	if err != nil {
 		slog.Error("Error storing payment", "error", err)
-		return nil, status.Error(codes.Internal, "failed to store payment")
+		return nil, connect.NewError(connect.CodeInternal, "failed to store payment")
 	}
 
 	slog.Info("Received payment", "name", name, "amount_cents", amountCents, "currency", currency)
-	slog.Info("Header value", "value", req.Header().Get("Some-Header"))
+	// CallInfo is absent when the store is invoked outside a Connect handler
+	// (e.g. via the MCP adapters), so header access is best-effort.
+	info, hasInfo := connect.CallInfoForServerContext(ctx)
+	if hasInfo {
+		slog.Info("Header value", "value", info.RequestHeader().Get("Some-Header"))
+	}
 
-	response := connect.NewResponse(&paymentv1.PaymentResponse{
+	response := &paymentv1.PaymentResponse{
 		Status: paymentv1.PaymentStatus_PAYMENT_STATUS_PAID,
-	})
-	response.Header().Set("Some-Other-Header", "hello!")
+	}
+	if hasInfo {
+		info.ResponseHeader().Set("Some-Other-Header", "hello!")
+	}
 	return response, nil
 }
 

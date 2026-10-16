@@ -5,163 +5,166 @@
 package paymentv1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	payment "github.com/grpc-buf/internal/gen/proto/payment"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// PaymentServiceName is the fully-qualified name of the PaymentService service.
 	PaymentServiceName = "rpc.payment.v1.PaymentService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// PaymentServiceMakePaymentProcedure is the fully-qualified name of the PaymentService's
-	// MakePayment RPC.
+	// PaymentServiceMakePaymentProcedure is the procedure name of the PaymentService's MakePayment RPC.
 	PaymentServiceMakePaymentProcedure = "/rpc.payment.v1.PaymentService/MakePayment"
-	// PaymentServiceMarkInvoicePaidProcedure is the fully-qualified name of the PaymentService's
+	// PaymentServiceMarkInvoicePaidProcedure is the procedure name of the PaymentService's
 	// MarkInvoicePaid RPC.
 	PaymentServiceMarkInvoicePaidProcedure = "/rpc.payment.v1.PaymentService/MarkInvoicePaid"
-	// PaymentServicePayInvoiceProcedure is the fully-qualified name of the PaymentService's PayInvoice
-	// RPC.
+	// PaymentServicePayInvoiceProcedure is the procedure name of the PaymentService's PayInvoice RPC.
 	PaymentServicePayInvoiceProcedure = "/rpc.payment.v1.PaymentService/PayInvoice"
+)
+
+var (
+	paymentServiceMakePaymentSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     payment.File_payment_payment_api_proto.Services().ByName("PaymentService").Methods().ByName("MakePayment"),
+			Procedure:  PaymentServiceMakePaymentProcedure,
+		}
+	})
+	paymentServiceMarkInvoicePaidSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     payment.File_payment_payment_api_proto.Services().ByName("PaymentService").Methods().ByName("MarkInvoicePaid"),
+			Procedure:  PaymentServiceMarkInvoicePaidProcedure,
+		}
+	})
+	paymentServicePayInvoiceSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     payment.File_payment_payment_api_proto.Services().ByName("PaymentService").Methods().ByName("PayInvoice"),
+			Procedure:  PaymentServicePayInvoiceProcedure,
+		}
+	})
 )
 
 // PaymentServiceClient is a client for the rpc.payment.v1.PaymentService service.
 type PaymentServiceClient interface {
-	MakePayment(context.Context, *connect.Request[payment.PaymentRequest]) (*connect.Response[payment.PaymentResponse], error)
-	MarkInvoicePaid(context.Context, *connect.Request[payment.MarkInvoicePaidRequest]) (*connect.Response[payment.Invoice], error)
-	PayInvoice(context.Context, *connect.Request[payment.PayInvoiceRequest]) (*connect.Response[payment.Invoice], error)
+	MakePayment(context.Context, *payment.PaymentRequest) (*payment.PaymentResponse, error)
+	MarkInvoicePaid(context.Context, *payment.MarkInvoicePaidRequest) (*payment.Invoice, error)
+	PayInvoice(context.Context, *payment.PayInvoiceRequest) (*payment.Invoice, error)
 }
 
-// NewPaymentServiceClient constructs a client for the rpc.payment.v1.PaymentService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewPaymentServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) PaymentServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	paymentServiceMethods := payment.File_payment_payment_api_proto.Services().ByName("PaymentService").Methods()
-	return &paymentServiceClient{
-		makePayment: connect.NewClient[payment.PaymentRequest, payment.PaymentResponse](
-			httpClient,
-			baseURL+PaymentServiceMakePaymentProcedure,
-			connect.WithSchema(paymentServiceMethods.ByName("MakePayment")),
-			connect.WithClientOptions(opts...),
-		),
-		markInvoicePaid: connect.NewClient[payment.MarkInvoicePaidRequest, payment.Invoice](
-			httpClient,
-			baseURL+PaymentServiceMarkInvoicePaidProcedure,
-			connect.WithSchema(paymentServiceMethods.ByName("MarkInvoicePaid")),
-			connect.WithClientOptions(opts...),
-		),
-		payInvoice: connect.NewClient[payment.PayInvoiceRequest, payment.Invoice](
-			httpClient,
-			baseURL+PaymentServicePayInvoiceProcedure,
-			connect.WithSchema(paymentServiceMethods.ByName("PayInvoice")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// paymentServiceClient implements PaymentServiceClient.
-type paymentServiceClient struct {
-	makePayment     *connect.Client[payment.PaymentRequest, payment.PaymentResponse]
-	markInvoicePaid *connect.Client[payment.MarkInvoicePaidRequest, payment.Invoice]
-	payInvoice      *connect.Client[payment.PayInvoiceRequest, payment.Invoice]
-}
-
-// MakePayment calls rpc.payment.v1.PaymentService.MakePayment.
-func (c *paymentServiceClient) MakePayment(ctx context.Context, req *connect.Request[payment.PaymentRequest]) (*connect.Response[payment.PaymentResponse], error) {
-	return c.makePayment.CallUnary(ctx, req)
-}
-
-// MarkInvoicePaid calls rpc.payment.v1.PaymentService.MarkInvoicePaid.
-func (c *paymentServiceClient) MarkInvoicePaid(ctx context.Context, req *connect.Request[payment.MarkInvoicePaidRequest]) (*connect.Response[payment.Invoice], error) {
-	return c.markInvoicePaid.CallUnary(ctx, req)
-}
-
-// PayInvoice calls rpc.payment.v1.PaymentService.PayInvoice.
-func (c *paymentServiceClient) PayInvoice(ctx context.Context, req *connect.Request[payment.PayInvoiceRequest]) (*connect.Response[payment.Invoice], error) {
-	return c.payInvoice.CallUnary(ctx, req)
+// NewPaymentServiceClient constructs a client for the rpc.payment.v1.PaymentService service.
+// Multiple service clients may share a single connect.Client.
+func NewPaymentServiceClient(client *connect.Client) PaymentServiceClient {
+	return &paymentServiceClient{client: client}
 }
 
 // PaymentServiceHandler is an implementation of the rpc.payment.v1.PaymentService service.
 type PaymentServiceHandler interface {
-	MakePayment(context.Context, *connect.Request[payment.PaymentRequest]) (*connect.Response[payment.PaymentResponse], error)
-	MarkInvoicePaid(context.Context, *connect.Request[payment.MarkInvoicePaidRequest]) (*connect.Response[payment.Invoice], error)
-	PayInvoice(context.Context, *connect.Request[payment.PayInvoiceRequest]) (*connect.Response[payment.Invoice], error)
+	MakePayment(context.Context, *payment.PaymentRequest) (*payment.PaymentResponse, error)
+	MarkInvoicePaid(context.Context, *payment.MarkInvoicePaidRequest) (*payment.Invoice, error)
+	PayInvoice(context.Context, *payment.PayInvoiceRequest) (*payment.Invoice, error)
 }
 
-// NewPaymentServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewPaymentServiceHandler(svc PaymentServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	paymentServiceMethods := payment.File_payment_payment_api_proto.Services().ByName("PaymentService").Methods()
-	paymentServiceMakePaymentHandler := connect.NewUnaryHandler(
-		PaymentServiceMakePaymentProcedure,
-		svc.MakePayment,
-		connect.WithSchema(paymentServiceMethods.ByName("MakePayment")),
-		connect.WithHandlerOptions(opts...),
+// RegisterPaymentServiceHandler registers svc as the rpc.payment.v1.PaymentService implementation
+// on server.
+func RegisterPaymentServiceHandler(server *connect.Server, svc PaymentServiceHandler) {
+	adapter := paymentServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: paymentServiceMakePaymentSpec(), Handler: adapter.makePayment},
+		connect.Method{Spec: paymentServiceMarkInvoicePaidSpec(), Handler: adapter.markInvoicePaid},
+		connect.Method{Spec: paymentServicePayInvoiceSpec(), Handler: adapter.payInvoice},
 	)
-	paymentServiceMarkInvoicePaidHandler := connect.NewUnaryHandler(
-		PaymentServiceMarkInvoicePaidProcedure,
-		svc.MarkInvoicePaid,
-		connect.WithSchema(paymentServiceMethods.ByName("MarkInvoicePaid")),
-		connect.WithHandlerOptions(opts...),
-	)
-	paymentServicePayInvoiceHandler := connect.NewUnaryHandler(
-		PaymentServicePayInvoiceProcedure,
-		svc.PayInvoice,
-		connect.WithSchema(paymentServiceMethods.ByName("PayInvoice")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/rpc.payment.v1.PaymentService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case PaymentServiceMakePaymentProcedure:
-			paymentServiceMakePaymentHandler.ServeHTTP(w, r)
-		case PaymentServiceMarkInvoicePaidProcedure:
-			paymentServiceMarkInvoicePaidHandler.ServeHTTP(w, r)
-		case PaymentServicePayInvoiceProcedure:
-			paymentServicePayInvoiceHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedPaymentServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedPaymentServiceHandler struct{}
 
-func (UnimplementedPaymentServiceHandler) MakePayment(context.Context, *connect.Request[payment.PaymentRequest]) (*connect.Response[payment.PaymentResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.payment.v1.PaymentService.MakePayment is not implemented"))
+func (UnimplementedPaymentServiceHandler) MakePayment(context.Context, *payment.PaymentRequest) (*payment.PaymentResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "rpc.payment.v1.PaymentService.MakePayment is not implemented")
 }
 
-func (UnimplementedPaymentServiceHandler) MarkInvoicePaid(context.Context, *connect.Request[payment.MarkInvoicePaidRequest]) (*connect.Response[payment.Invoice], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.payment.v1.PaymentService.MarkInvoicePaid is not implemented"))
+func (UnimplementedPaymentServiceHandler) MarkInvoicePaid(context.Context, *payment.MarkInvoicePaidRequest) (*payment.Invoice, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "rpc.payment.v1.PaymentService.MarkInvoicePaid is not implemented")
 }
 
-func (UnimplementedPaymentServiceHandler) PayInvoice(context.Context, *connect.Request[payment.PayInvoiceRequest]) (*connect.Response[payment.Invoice], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rpc.payment.v1.PaymentService.PayInvoice is not implemented"))
+func (UnimplementedPaymentServiceHandler) PayInvoice(context.Context, *payment.PayInvoiceRequest) (*payment.Invoice, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "rpc.payment.v1.PaymentService.PayInvoice is not implemented")
+}
+
+type paymentServiceClient struct {
+	client *connect.Client
+}
+
+func (c *paymentServiceClient) MakePayment(ctx context.Context, req *payment.PaymentRequest) (*payment.PaymentResponse, error) {
+	var res payment.PaymentResponse
+	if err := c.client.CallUnary(ctx, paymentServiceMakePaymentSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *paymentServiceClient) MarkInvoicePaid(ctx context.Context, req *payment.MarkInvoicePaidRequest) (*payment.Invoice, error) {
+	var res payment.Invoice
+	if err := c.client.CallUnary(ctx, paymentServiceMarkInvoicePaidSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *paymentServiceClient) PayInvoice(ctx context.Context, req *payment.PayInvoiceRequest) (*payment.Invoice, error) {
+	var res payment.Invoice
+	if err := c.client.CallUnary(ctx, paymentServicePayInvoiceSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type paymentServiceHandler struct{ svc PaymentServiceHandler }
+
+func (h paymentServiceHandler) makePayment(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req payment.PaymentRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.MakePayment(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h paymentServiceHandler) markInvoicePaid(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req payment.MarkInvoicePaidRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.MarkInvoicePaid(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h paymentServiceHandler) payInvoice(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req payment.PayInvoiceRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.PayInvoice(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }
