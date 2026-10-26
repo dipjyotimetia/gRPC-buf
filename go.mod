@@ -3,8 +3,8 @@ module github.com/grpc-buf
 go 1.26.1
 
 require (
-	connectrpc.com/connect v1.21.0
-	connectrpc.com/connect/v2 v2.0.1
+	connectrpc.com/connect v1.21.1
+	connectrpc.com/connect/v2 v2.0.2
 	connectrpc.com/grpchealth/v2 v2.0.0
 	connectrpc.com/grpcreflect/v2 v2.0.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -17,7 +17,7 @@ require (
 	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/crypto v0.58.0
-	golang.org/x/net v0.60.0
+	golang.org/x/net v0.61.0
 	golang.org/x/time v0.16.0
 	google.golang.org/genproto v0.0.0-20260630182238-925bb5da69e7
 	google.golang.org/genproto/googleapis/api v0.0.0-20260706201446-f0a921348800
